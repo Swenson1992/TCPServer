@@ -9,7 +9,7 @@ var receiveBufferSize = defaultBufferSize;
 var receiveBuffer = new Buffer(defaultBufferSize);
 var receiveOffset = 0;
 var receiveDataStr = "";
-//�ͻ���ģ��
+//客户端模块
 function start(){
   var net = require('net');
 
