@@ -122,7 +122,7 @@ function start(){
   });
   //服务器端口
   chatServer.listen(8999, function(){
-    console.log("server bound : 9001");
+    console.log("server bound : 8999");
   });
 }
 

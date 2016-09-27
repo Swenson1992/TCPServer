@@ -7,28 +7,28 @@ function start(){
   var HOST = '192.100.10.28';
   var PORT = 9003;
   
-  var lsSocket = new net.Socket();
+  var oaSocket = new net.Socket();
   
   function connectServer() {
-    var x = lsSocket.connect(PORT, HOST);
+    var x = oaSocket.connect(PORT, HOST);
   }
   
   connectServer();
   
-  lsSocket.on('error', function (error) {
+  oaSocket.on('error', function (error) {
     console.log("error : " + error.toString());
   });
   
-  lsSocket.on('close', function () {
+  oaSocket.on('close', function () {
     var recentDate = new Date();
     console.log('connection closed on '+recentDate);
     connectServer();
   });
   
-  lsSocket.on('connect', function () {
+  oaSocket.on('connect', function () {
     console.log('connect Ok.');
   });
-  lsSocket.on('data', function (data) {
+  oaSocket.on('data', function (data) {
     var receiveData = data.toString('utf8', 0);
     console.log(receiveData);
   });

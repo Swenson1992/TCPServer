@@ -38,7 +38,7 @@ virtualClient.on('connect', function () {
   //},10000);
 });
 virtualClient.on('data', function (data) {
-  var receiveData = data.toString('utf8', 0);
+  //var receiveData = data.toString('utf8', 0);
   //console.log(receiveData);
 });
 
