@@ -12,7 +12,7 @@ var recentDate = new Date();
 
 var net = require('net');
 /**
- * oa 的 HOST 以及 PORT 连接
+ * oa 的 HOST 以及 PORT 连接(李靖峰)
  */
 var HOST = '192.100.10.28';
 var PORT = 9000;

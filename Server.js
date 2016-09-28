@@ -39,23 +39,88 @@ function start(){
   }
 
   /**
-   *每间隔2秒对后台返回的消息数组轮询，如果有消息返回，存储clientName、ReceiveStr，
-   * 删除 NameArray 的顶部 client 和收到消息的数组顶部消息，获取SN做包传回给前台
+   *请求式：每间隔2秒对后台返回的消息数组轮询，如果有消息返回，存储clientName、ReceiveStr，
+   *       删除 NameArray 的顶部 client 和收到消息的数组顶部消息，获取SN做包传回给前台
+   *推送式: 如果有推送信息，则推送给每一个客户端
    */
   setInterval(function(){
+    /** 数据库 **/
     if(!!commonSourceServer.dbReceiveStrArray[0]){
       //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
       var clientName = commonSourceServer.dbNameArray.shift();//客户端名
-      var ReceiveStr = commonSourceServer.dbReceiveStrArray.shift();
+      var receiveStr = commonSourceServer.dbReceiveStrArray.shift();
 
       var client = getClientByClientName(clientName);
       //console.log('client:'+client);
       var SN = commonSourceServer.dbSN.shift();
-      sendData(ReceiveStr,SN,client);
+      sendRequestData(receiveStr,SN,client);
     }else{
       //console.log("dbReceiveStrArray is empty");
       //console.log('【commonSourceServer.dbNameArray】='+commonSourceServer.dbNameArray);
       //console.log('【commonSourceServer.dbStrArray】='+commonSourceServer.dbStrArray);
+    }
+    /** elasticsearch **/
+    if(!!commonSourceServer.esReceiveStrArray[0]){
+      //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
+      var clientName = commonSourceServer.esNameArray.shift();//客户端名
+      var receiveStr = commonSourceServer.esReceiveStrArray.shift();
+
+      var client = getClientByClientName(clientName);
+      //console.log('client:'+client);
+      var SN = commonSourceServer.esSN.shift();
+      sendRequestData(receiveStr,SN,client);
+    }else{
+
+    }
+    /** 基线 **/
+    if(!!commonSourceServer.jxReceiveStrArray[0]){
+      //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
+      var clientName = commonSourceServer.jxNameArray.shift();//客户端名
+      var receiveStr = commonSourceServer.jxReceiveStrArray.shift();
+
+      var client = getClientByClientName(clientName);
+      //console.log('client:'+client);
+      var SN = commonSourceServer.jxSN.shift();
+      sendRequestData(receiveStr,SN,client);
+    }else{
+
+    }
+    /** 漏扫 **/
+    if(!!commonSourceServer.lsReceiveStrArray[0]){
+      //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
+      var clientName = commonSourceServer.lsNameArray.shift();//客户端名
+      var receiveStr = commonSourceServer.lsReceiveStrArray.shift();
+
+      var client = getClientByClientName(clientName);
+      //console.log('client:'+client);
+      var SN = commonSourceServer.lsSN.shift();
+      sendRequestData(receiveStr,SN,client);
+    }else{
+
+    }
+    /** 运维审计 **/
+    if(!!commonSourceServer.oaReceiveStrArray[0]){
+      //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
+      var clientName = commonSourceServer.oaNameArray.shift();//客户端名
+      var receiveStr = commonSourceServer.oaReceiveStrArray.shift();
+
+      var client = getClientByClientName(clientName);
+      //console.log('client:'+client);
+      var SN = commonSourceServer.oaSN.shift();
+      sendRequestData(receiveStr,SN,client);
+    }else{
+
+    }
+    /**
+     * 检测是否有数据库后台推送告警信息 ，推送至所有连接的客户端client
+     */
+    if(!!commonSourceServer.dbReceivePushArray[0]){
+      var receivePushStr = commonSourceServer.dbReceivePushArray.shift();
+      for(var tag = 0; tag < clientList.length; tag++){
+        sendPushData(receivePushStr,clientList[tag],0);
+      }
+    }else{
+
     }
   },2000);
 
@@ -100,15 +165,16 @@ function start(){
     console.log("server bound : 8999");
   });
 }
+
 /**
- * 函数名：sendData
+ * 函数名：sendRequestData
  * 功能 ：将后台返回信息传送给前端客户端
  * 参数 ：
  *   ReceiveStr ：后台返回的数据
  *   SN ：客户端请求包的 SN 标识
  *   client : 客户端名称
  */
-function sendData(ReceiveStr,SN,client){
+function sendRequestData(ReceiveStr,SN,client){
   var dbReceiveStr = JSON.stringify(ReceiveStr);
   //console.log('dbReceiveStr :'+dbReceiveStr);
   var len = Buffer.byteLength(dbReceiveStr);
@@ -128,6 +194,35 @@ function sendData(ReceiveStr,SN,client){
   //写入数据
   sendDbBuffer.write(dbReceiveStr, 8);
   client.write(sendDbBuffer);
+}
+
+/**
+ * 函数名：sendPushData
+ * 功能 ：将后台返回信息传送给前端客户端,这里特征码为 fffd 表示后台推送的数据
+ * 参数 ：
+ *   ReceiveStr ：后台返回的数据
+ *   SN ：标记(推送的SN暂时为0)
+ *   client : 客户端名称
+ */
+function sendPushData(ReceivePushStr, client, SN){
+  var dbReceivePushStr = JSON.stringify(ReceivePushStr);
+  //console.log('dbReceiveStr :'+dbReceiveStr);
+  var len = Buffer.byteLength(dbReceiveStr);
+  var sendDbPushBuffer = new Buffer(len + 8);
+  //console.log("len of send data : " + len);
+
+  //写入2个字节特征码
+  sendDbPushBuffer.writeUInt16BE(65533, 0);//0xfffd
+
+  //写入2个字节编号
+  sendDbPushBuffer.writeUInt16BE(SN, 2);
+
+  //写入4个字节表示本次包长
+  sendDbPushBuffer.writeUInt32BE(len, 4);
+
+  //写入数据
+  sendDbPushBuffer.write(dbReceivePushStr, 8);
+  client.write(sendDbPushBuffer);
 }
 
 /**
@@ -188,7 +283,7 @@ function bufferData(data,clientName){
 
 /**
  * 函数名：dealReceiveDataSJ
- * 功能：用于处理所接收的数据包
+ * 功能：用于处理从前台所接收的数据包
  * 参数 ：
  *   dealDataBuffer ：数据包信息
  *   clientName ：客户端名称
@@ -218,17 +313,17 @@ function dealReceiveDataSJ(dealDataBuffer,clientName,SN) {
       commonSourceServer.esNameArray.push(clientName);
       commonSourceServer.esSN.push(SN);
       break;
-    case jx:
+    case 'jx':
       commonSourceServer.jxStrArray.push(receiveData.requestStr);
       commonSourceServer.jxNameArray.push(clientName);
       commonSourceServer.jxSN.push(SN);
       break;
-    case ls:
+    case 'ls':
       commonSourceServer.lsStrArray.push(receiveData.requestStr);
       commonSourceServer.lsNameArray.push(clientName);
       commonSourceServer.lsSN.push(SN);
       break;
-    case oa:
+    case 'oa':
       commonSourceServer.oaStrArray.push(receiveData.requestStr);
       commonSourceServer.oaNameArray.push(clientName);
       commonSourceServer.oaSN.push(SN);

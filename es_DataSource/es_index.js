@@ -13,10 +13,10 @@ var recentDate = new Date();
 
 var net = require('net');
 /**
- * es 的 HOST 以及 PORT 连接
+ * es 的 HOST 以及 PORT 连接(郭乃豪)
  */
 var HOST = '192.100.10.28';
-var PORT = 9000;
+var PORT = 30001;
 var RecentProcess = true;//确保一个进程
 var dbSocket = new net.Socket();
 

@@ -1,39 +1,24 @@
 /**
- * Created by songjian on 2016/9/22.
+ * Created by songjian on 2016/9/28.
  */
 var commonSourceServer = require("../commonSource");
-
+var net = require('net');
 var defaultBufferSize = 1024;
 var receiveBufferSize = defaultBufferSize;
 var receiveBuffer = new Buffer(defaultBufferSize);
 var receiveOffset = 0;
-var receiveDataStr = "";
 var recentDate = new Date();
 
-var net = require('net');
 /**
- * jx 的 HOST 以及 PORT 连接
+ * db 的 HOST 以及 PORT 连接(高英健)
  */
-var HOST = '192.100.10.28';
-var PORT = 30002;
-var RecentProcess = true;//确保一个进程
+var HOST = '192.100.10.16';
+var PORT = 9251;
 var dbSocket = new net.Socket();
 
 /**
- * 生成 SN 标记，返回 SN 的值
- **/
-var SNMax = 0;
-function getSN(){
-  SNMax++;
-  if(SNMax == 65534){
-    SNMax = 0;
-  }
-  return SNMax;
-}
-
-/**
  * 函数名：start
- * 功能：db的客户端，用于向后台 db 服务端发送请求信息，
+ * 功能：db 接收推送消息的客户端，用于向前台推送消息
  */
 function start(){
 
@@ -53,61 +38,12 @@ function start(){
   });
 
   dbSocket.on('connect', function () {
-    console.log('connect Ok.');
-    setInterval(function(){
-      if(!!commonSourceServer.dbStrArray[0]){
-        //console.log("dbStrArray :"+commonSourceServer.dbStrArray[0]);
-        //console.log("count : "+RecentProcess);
-        if(RecentProcess){
-          //console.log(recentDate+':'+"dbStrArray :"+commonSourceServer.dbStrArray[0]);
-          /**
-           * 将请求信息重新做包发送给后台
-           **/
-          var RequestStr = commonSourceServer.dbStrArray.shift();
-          //console.log(recentDate+':'+"RequestStr :"+RequestStr);
-          var SN = getSN();
-          commonSourceServer.dbRequestSN.push(SN);
-          sendData(RequestStr,SN);
-          RecentProcess = false;
-        }
-      }else{
-        //console.log('[else RecentProcess]:' + RecentProcess);
-      }
-    },1000);
+    console.log('【db push】connect Ok.');
   });
   dbSocket.on('data', function (data) {
-    //var receiveData = data.toString('utf8', 0);
-    //console.log(recentDate+':'+'receiveData :' +receiveData);
+    //收到 db 推送的消息
     bufferData(data);
-    //console.log("Trigger data RecentProcess = "+ RecentProcess);
   });
-}
-
-/**
- * 函数名：sendData
- * 功能 ：将前台请求信息传送给后台 db 服务端
- * 参数 ：
- *   RequestStr ：前台请求信息
- *   SN ：向后台发送请求包的 SN 标识，暂时没用
- */
-function sendData(RequestStr,SN){
-  var len = Buffer.byteLength(RequestStr);
-
-  var sendDbBuffer = new Buffer(len + 8);
-  //console.log("len of send data : " + len);
-
-  //写入2个字节特征码
-  sendDbBuffer.writeUInt16BE(65534, 0);//0xfffe
-
-  //写入2个字节编号
-  sendDbBuffer.writeUInt16BE(SN, 2);
-
-  //写入4个字节表示本次包长
-  sendDbBuffer.writeUInt32BE(len, 4);
-
-  //写入数据
-  sendDbBuffer.write(RequestStr, 8);
-  dbSocket.write(sendDbBuffer);
 }
 
 /**
@@ -119,7 +55,8 @@ function sendData(RequestStr,SN){
 function bufferData(data){
   //如果当前数据包data的长度大于可用的receiveBuffer，new一个新的receiveData，之后进行旧有数据的拷贝。
   while (data.length > receiveBufferSize - receiveOffset) {
-    var dataNeedBufferSize = data.length - (receiveBufferSize - receiveOffset);//本次data需要的buffer大小为本data长度减去receiveBuffer中空闲buffer的大小。
+    //本次data需要的buffer大小为本data长度减去receiveBuffer中空闲buffer的大小。
+    var dataNeedBufferSize = data.length - (receiveBufferSize - receiveOffset);
     //如果需要的buffer大小（dataNeedBufferSize）大于defaultBufferSize，则增加dataNeedBufferSize，否则增加dataNeedBufferSize，避免多个小包一起过来，导致多次扩大buffer。
     receiveBufferSize += dataNeedBufferSize > defaultBufferSize ? dataNeedBufferSize : defaultBufferSize;
     //console.log("receiveBufferSize : " + receiveBufferSize);
@@ -173,14 +110,11 @@ function bufferData(data){
  */
 function dealReceiveDataSJ(dealDataBuffer) {
 
-  var receiveDataString = dealDataBuffer.toString('utf8', 0);
+  var receivePushDataString = dealDataBuffer.toString('utf8', 0);
   // String 转换成 JSON
-  receiveDataStr = JSON.parse(receiveDataString);
-  console.log(recentDate+':'+'receiveDataString :' +receiveDataString);
-  commonSourceServer.dbReceiveStrArray.push(receiveDataStr);
-  //console.log(recentDate+':'+'dbReceiveStrArray[0] :' +commonSourceServer.dbReceiveStrArray[0].resourceType);
-  //console.log(recentDate+':'+'dbReceiveStrArray[0] :' +commonSourceServer.dbReceiveStrArray[0].result.songjian);
-  RecentProcess = true;
+  var receivePushDataStr = JSON.parse(receivePushDataString);
+  console.log(recentDate+':'+'receivePushDataString :' +receivePushDataString);
+  commonSourceServer.dbReceivePushArray.push(receivePushDataStr);
 }
 
-exports.jxClientStart = start;
+exports.dbPushClientStart = start;

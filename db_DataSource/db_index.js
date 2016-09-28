@@ -12,6 +12,9 @@ var receiveDataStr = "";
 var recentDate = new Date();
 
 var net = require('net');
+/**
+ * db 的 HOST 以及 PORT 连接(高英健)
+ */
 var HOST = '192.100.10.16';
 var PORT = 9251;
 var RecentProcess = true;//确保一个进程
@@ -119,7 +122,8 @@ function sendData(RequestStr,SN){
 function bufferData(data){
   //如果当前数据包data的长度大于可用的receiveBuffer，new一个新的receiveData，之后进行旧有数据的拷贝。
   while (data.length > receiveBufferSize - receiveOffset) {
-    var dataNeedBufferSize = data.length - (receiveBufferSize - receiveOffset);//本次data需要的buffer大小为本data长度减去receiveBuffer中空闲buffer的大小。
+    //本次data需要的buffer大小为本data长度减去receiveBuffer中空闲buffer的大小。
+    var dataNeedBufferSize = data.length - (receiveBufferSize - receiveOffset);
     //如果需要的buffer大小（dataNeedBufferSize）大于defaultBufferSize，则增加dataNeedBufferSize，否则增加dataNeedBufferSize，避免多个小包一起过来，导致多次扩大buffer。
     receiveBufferSize += dataNeedBufferSize > defaultBufferSize ? dataNeedBufferSize : defaultBufferSize;
     //console.log("receiveBufferSize : " + receiveBufferSize);
