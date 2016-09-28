@@ -210,7 +210,7 @@ function dealReceiveDataSJ(dealDataBuffer,clientName,SN) {
       //console.log('最顶部的 SN[0] :'+commonSourceServer.dbSN[0]);
       //console.log('commonSourceServer.dbStrArray.length = '+commonSourceServer.dbStrArray.length);
       //console.log('commonSourceServer.dbNameArray.length = '+commonSourceServer.dbNameArray.length);
-      console.log('【server】commonSourceServer.dbStrArray :'+commonSourceServer.dbStrArray);
+      //console.log('【server】commonSourceServer.dbStrArray :'+commonSourceServer.dbStrArray);
       //console.log('commonSourceServer.dbNameArray :'+commonSourceServer.dbNameArray);
       break;
     case 'es':

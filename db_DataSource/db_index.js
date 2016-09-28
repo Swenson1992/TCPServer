@@ -89,7 +89,7 @@ function start(){
  *   SN ：向后台发送请求包的 SN 标识，暂时没用
  */
 function sendData(RequestStr,SN){
-  console.log('【db】给后台传的数据：'+RequestStr);
+  //console.log('【db】给后台传的数据：'+RequestStr);
   var len = Buffer.byteLength(RequestStr);
 
   var sendDbBuffer = new Buffer(len + 8);
@@ -106,7 +106,7 @@ function sendData(RequestStr,SN){
 
   //写入数据
   sendDbBuffer.write(RequestStr, 8);
-  console.log('【db】sendDbBuffer:'+sendDbBuffer);
+  //console.log('【db】sendDbBuffer:'+sendDbBuffer);
   dbSocket.write(sendDbBuffer);
 }
 
