@@ -8,7 +8,6 @@ var receiveBuffer = new Buffer(defaultBufferSize);
 var receiveData = "";
 var receiveOffset = 0;
 var receiveDataString = "";
-var recentDbName = "";
 /**
  * 该服务端用于接收前台传过来的请求命令，是db、es、jx、ls、oa的总服务端，
  */
@@ -59,6 +58,7 @@ function start(){
       //console.log('【commonSourceServer.dbStrArray】='+commonSourceServer.dbStrArray);
     }
   },2000);
+
   chatServer.on('connection', function (client) {//服务器连接客户端
 
     /*增加name属性*/
@@ -67,10 +67,10 @@ function start(){
       remotePort: client.remotePort
     };
 
-    //client.write('Hi' + client.name + '!\n');
+    console.log('client name :' + client.name.remoteAddress+':'+client.name.remotePort);
 
-    console.log('client name remoteAddress :' + client.name.remoteAddress);
     clientList.push(client);
+
     client.on('data', function (data) {
       //console.log('收到的客户端侧请求信息：'+data.toString('utf8',0));
       /*添加事件监听器，这样就可以访问到连接事件所对应的client对象，当client发送数据给服务器时，这一事件就会触发*/
@@ -79,7 +79,8 @@ function start(){
     //监听客户端终止
     client.on('end',function(){
       var recentEndDate = new Date();
-      console.log('Trigger End : '+client.name.remoteAddress+':'+client.name.remotePort+' is quit by '+recentEndDate);//如果某个客户端断开连接，node控制台就会打印出来
+      console.log('Trigger End : '+client.name.remoteAddress+':'+client.name.remotePort+' is quit by '+recentEndDate);
+      //如果某个客户端断开连接，node控制台就会打印出来
       clientList.splice(clientList.indexOf(client),1);
     });
     /*记录错误*/
@@ -89,24 +90,31 @@ function start(){
     //监听客户端关闭
     client.on('close', function () {
       var recentDate = new Date();
-      console.log('Trigger close :'+client.name.remoteAddress+':'+client.name.remotePort+' is close by '+ recentDate);//如果某个客户端关闭，node控制台就会打印出来
+      console.log('Trigger close :'+client.name.remoteAddress+':'+client.name.remotePort+' is close by '+ recentDate);
+      //如果某个客户端关闭，node控制台就会打印出来
       clientList.splice(clientList.indexOf(client),1);
     });
-
   });
   //服务器端口
   chatServer.listen(8999, function(){
     console.log("server bound : 8999");
   });
 }
-
+/**
+ * 函数名：sendData
+ * 功能 ：将后台返回信息传送给前端客户端
+ * 参数 ：
+ *   ReceiveStr ：后台返回的数据
+ *   SN ：客户端请求包的 SN 标识
+ *   client : 客户端名称
+ */
 function sendData(ReceiveStr,SN,client){
-  var dbReceiveStr = JSON.stringify(ReceiveStr);//转成字符串
-  console.log('dbReceiveStr :'+dbReceiveStr);
+  var dbReceiveStr = JSON.stringify(ReceiveStr);
+  //console.log('dbReceiveStr :'+dbReceiveStr);
   var len = Buffer.byteLength(dbReceiveStr);
 
   var sendDbBuffer = new Buffer(len + 8);
-  console.log("len of send data : " + len);
+  //console.log("len of send data : " + len);
 
   //写入2个字节特征码
   sendDbBuffer.writeUInt16BE(65534, 0);//0xfffe
@@ -123,9 +131,11 @@ function sendData(ReceiveStr,SN,client){
 }
 
 /**
- *bufferData 用于接收数据包
- * data ：数据包信息
- * clientName ：客户端名称
+ * 函数名：bufferData
+ * 功能：用于接收数据包
+ * 参数：
+ *   data ：数据包信息
+ *   clientName ：客户端名称
  */
 function bufferData(data,clientName){
   //如果当前数据包data的长度大于可用的receiveBuffer，new一个新的receiveData，之后进行旧有数据的拷贝。
@@ -177,10 +187,12 @@ function bufferData(data,clientName){
 }
 
 /**
- *dealReceiveDataSJ 用于处理所接收的数据包
- * dealDataBuffer ：数据包信息
- * clientName ：客户端名称
- * SN ：数据包标记
+ * 函数名：dealReceiveDataSJ
+ * 功能：用于处理所接收的数据包
+ * 参数 ：
+ *   dealDataBuffer ：数据包信息
+ *   clientName ：客户端名称
+ *   SN ：数据包标记
  */
 function dealReceiveDataSJ(dealDataBuffer,clientName,SN) {
 
@@ -198,27 +210,28 @@ function dealReceiveDataSJ(dealDataBuffer,clientName,SN) {
       //console.log('最顶部的 SN[0] :'+commonSourceServer.dbSN[0]);
       //console.log('commonSourceServer.dbStrArray.length = '+commonSourceServer.dbStrArray.length);
       //console.log('commonSourceServer.dbNameArray.length = '+commonSourceServer.dbNameArray.length);
-      //console.log('commonSourceServer.dbStrArray :'+commonSourceServer.dbStrArray);
+      console.log('【server】commonSourceServer.dbStrArray :'+commonSourceServer.dbStrArray);
       //console.log('commonSourceServer.dbNameArray :'+commonSourceServer.dbNameArray);
-      //最近的一个客户端
-      recentDbName = commonSourceServer.dbNameArray[0];
-      //console.log('最近的一个客户端:'+commonSourceServer.dbNameArray[0].remoteAddress);
       break;
     case 'es':
-      esStrArray.push(receiveData.requestStr);
-      esNameArray.push(client.name);
+      commonSourceServer.esStrArray.push(receiveData.requestStr);
+      commonSourceServer.esNameArray.push(clientName);
+      commonSourceServer.esSN.push(SN);
       break;
     case jx:
-      jxStrArray.push(receiveData.requestStr);
-      jxNameArray.push(client.name);
+      commonSourceServer.jxStrArray.push(receiveData.requestStr);
+      commonSourceServer.jxNameArray.push(clientName);
+      commonSourceServer.jxSN.push(SN);
       break;
     case ls:
-      lsStrArray.push(receiveData.requestStr);
-      lsNameArray.push(client.name);
+      commonSourceServer.lsStrArray.push(receiveData.requestStr);
+      commonSourceServer.lsNameArray.push(clientName);
+      commonSourceServer.lsSN.push(SN);
       break;
     case oa:
-      oaStrArray.push(receiveData.requestStr);
-      oaNameArray.push(client.name);
+      commonSourceServer.oaStrArray.push(receiveData.requestStr);
+      commonSourceServer.oaNameArray.push(clientName);
+      commonSourceServer.oaSN.push(SN);
       break;
     default :
       throw new TypeError('unknown receiveData resourceType : ' + receiveData.resourceType);

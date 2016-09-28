@@ -9,8 +9,14 @@ var receiveBufferSize = defaultBufferSize;
 var receiveBuffer = new Buffer(defaultBufferSize);
 var receiveOffset = 0;
 var receiveDataStr = "";
-
 var recentDate = new Date();
+
+var net = require('net');
+var HOST = '192.100.10.16';
+var PORT = 9251;
+var RecentProcess = true;//确保一个进程
+var dbSocket = new net.Socket();
+
 /**
  * 生成 SN 标记，返回 SN 的值
  **/
@@ -22,16 +28,13 @@ function getSN(){
   }
   return SNMax;
 }
-//客户端模块
-var net = require('net');
 
-var HOST = '192.100.10.28';
-var PORT = 9000;
-var RecentProcess = true;
-var dbSocket = new net.Socket();
+/**
+ * 函数名：start
+ * 功能：db的客户端，用于向后台 db 服务端发送请求信息，
+ */
 function start(){
 
-  //var RecentProcess = true;
   function connectServer() {
     var x = dbSocket.connect(PORT, HOST);
   }
@@ -48,7 +51,7 @@ function start(){
   });
 
   dbSocket.on('connect', function () {
-    console.log('connect Ok.');
+    console.log('【db】connect Ok.');
     setInterval(function(){
       if(!!commonSourceServer.dbStrArray[0]){
         //console.log("dbStrArray :"+commonSourceServer.dbStrArray[0]);
@@ -78,9 +81,16 @@ function start(){
   });
 }
 
+/**
+ * 函数名：sendData
+ * 功能 ：将前台请求信息传送给后台 db 服务端
+ * 参数 ：
+ *   RequestStr ：前台请求信息
+ *   SN ：向后台发送请求包的 SN 标识，暂时没用
+ */
 function sendData(RequestStr,SN){
-  var dbReceiveStr = JSON.stringify(RequestStr);//转成字符串
-  var len = Buffer.byteLength(dbReceiveStr);
+  console.log('【db】给后台传的数据：'+RequestStr);
+  var len = Buffer.byteLength(RequestStr);
 
   var sendDbBuffer = new Buffer(len + 8);
   //console.log("len of send data : " + len);
@@ -95,10 +105,17 @@ function sendData(RequestStr,SN){
   sendDbBuffer.writeUInt32BE(len, 4);
 
   //写入数据
-  sendDbBuffer.write(dbReceiveStr, 8);
+  sendDbBuffer.write(RequestStr, 8);
+  console.log('【db】sendDbBuffer:'+sendDbBuffer);
   dbSocket.write(sendDbBuffer);
 }
 
+/**
+ * 函数名：bufferData
+ * 功能：用于接收后台返回请求的数据包
+ * 参数：
+ *   data ：返回的数据包信息
+ */
 function bufferData(data){
   //如果当前数据包data的长度大于可用的receiveBuffer，new一个新的receiveData，之后进行旧有数据的拷贝。
   while (data.length > receiveBufferSize - receiveOffset) {
@@ -148,6 +165,12 @@ function bufferData(data){
   }
 }
 
+/**
+ * 函数名：dealReceiveDataSJ
+ * 功能：用于处理所接收的数据包，在此处控制单进程
+ * 参数 ：
+ *   dealDataBuffer ：数据包信息
+ */
 function dealReceiveDataSJ(dealDataBuffer) {
 
   var receiveDataString = dealDataBuffer.toString('utf8', 0);
@@ -159,7 +182,5 @@ function dealReceiveDataSJ(dealDataBuffer) {
   //console.log(recentDate+':'+'dbReceiveStrArray[0] :' +commonSourceServer.dbReceiveStrArray[0].result.songjian);
   RecentProcess = true;
 }
-
-
 
 exports.dbClientStart = start;
