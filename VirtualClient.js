@@ -31,15 +31,22 @@ virtualClient.on('connect', function () {
     "requestStr":"\u0000\u0001update jsqy set SHORTNAME = '平圩电厂new2' where REMARK = '平圩电厂new'"
   };
   var dbSourceStr = JSON.stringify(dbSource);
+  var dbSource1 = {
+    "resourceType":"db",
+    "requestStr":"\u0000\u0001select * from jspt where REMARK = '平圩电厂new'"
+  };
+  var dbSourceStr1 = JSON.stringify(dbSource1);
   //setInterval(function(){
-  for(var index = 0;index < 2; index++){
-    sendData(dbSourceStr);
-  }
+  //for(var index = 0;index < 5; index++){
+  //
+  //}
+  sendData(dbSourceStr);
+  sendData(dbSourceStr1);
   //},10000);
 });
 virtualClient.on('data', function (data) {
-  //var receiveData = data.toString('utf8', 0);
-  //console.log(receiveData);
+  var receiveData = data.toString('utf8', 0);
+  console.log(receiveData);
 });
 
 

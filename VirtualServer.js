@@ -4,23 +4,25 @@
 
 var net = require('net');//1 引入net模块
 var dbServer = net.createServer();//创建net服务器
-
+var recentDate = new Date();
 dbServer.on('connection', function (socket) {//服务器连接客户端
   socket.name ={
-    remoteAddress:socket.remoteAddress.match(/(\d+.){3}\d+/g),
+    remoteAddress:socket.remoteAddress.slice(7),
     remotePort:socket.remotePort
   };
   socket.on('data', function (data) {
-    console.log("Virtual Server :"+data);
+
+    var receiveData = data.toString('utf8', 0);
+    console.log(recentDate+':'+"Virtual Server :"+receiveData);
     var dbSourceResult = {
       "resourceType":"db",
       "result":{
-        "songjian" :"1122",
-        "count" : "123"
+        "false" :"true"
       }
     };
+
     var dbSourceStr = JSON.stringify(dbSourceResult);
-    console.log("dbSourceStr : " + dbSourceStr);
+    console.log(recentDate+':'+"dbSourceStr : " + dbSourceStr);
 
     var len = Buffer.byteLength(dbSourceStr);
 

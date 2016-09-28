@@ -6,23 +6,29 @@ var esStrArray = [],esNameArray = [],esReceiveStrArray = [],esSN = [];
 var jxStrArray = [],jxNameArray = [],jxReceiveStrArray = [],jxSN = [];
 var lsStrArray = [],lsNameArray = [],lsReceiveStrArray = [],lsSN = [];
 var oaStrArray = [],oaNameArray = [],oaReceiveStrArray = [],oaSN = [];
-
+var dbReceivePushArray = [];
+var dbRequestSN = [];
 /**
-
-//存储db、es、jx、ls、oa的请求信息和客户端名
-exports.dbStrArray = dbStrArray;
-exports.dbNameArray = dbNameArray;
-//存储后台返回的db、es、jx、ls、oa的消息
-exports.dbReceiveStrArray = dbReceiveStrArray;
-//存储客户端请求时db、es、jx、ls、oa的SN值
-exports.dbSN = dbSN;
-
+  存储db(es、jx、ls、oa)的请求信息和客户端名
+    exports.dbStrArray = dbStrArray;
+    exports.dbNameArray = dbNameArray;
+  存储后台返回的db(es、jx、ls、oa)的消息
+    exports.dbReceiveStrArray = dbReceiveStrArray;
+  存储客户端请求时db(es、jx、ls、oa)的SN值
+    exports.dbSN = dbSN;
+  存储向后台请求时db(es、jx、ls、oa)的SN值
+    exports.dbRequestSN = dbRequestSN;
+  存储后台自动推送的db(es、jx、ls、oa)的消息
+    exports.dbReceivePushArray = dbReceivePushArray;
 **/
+
 /** 数据库 **/
 exports.dbStrArray = dbStrArray;
 exports.dbNameArray = dbNameArray;
 exports.dbReceiveStrArray = dbReceiveStrArray;
 exports.dbSN = dbSN;
+exports.dbRequestSN = dbRequestSN;
+exports.dbReceivePushArray = dbReceivePushArray;
 /** elasticsearch **/
 exports.esStrArray = esStrArray;
 exports.esNameArray = esNameArray;
