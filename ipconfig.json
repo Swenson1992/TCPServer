@@ -30,9 +30,14 @@
     "HOST":"192.100.10.28",
     "PORT":"9255"
   },
-  //推送的HOST和PORT配置
+  //数据库推送的HOST和PORT配置
   "dbPushIPconfig":{
     "HOST":"192.100.10.28",
     "PORT":"9256"
+  },
+  //运维推送的HOST和PORT配置
+  "oaPushIPconfig":{
+    "HOST":"192.100.10.28",
+    "PORT":"9257"
   }
 }
