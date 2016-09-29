@@ -2,7 +2,7 @@
  * Created by songjian on 2016/9/29.
  */
 var commonSourceServer = require("../commonSource");
-var config = requrie("../runconfig");
+var ipconfig = requrie("../runconfig");
 
 var net = require('net');
 var defaultBufferSize = 1024;
