@@ -2,6 +2,8 @@
  * Created by songjian on 2016/9/28.
  */
 var commonSourceServer = require("../commonSource");
+var ipconfig = require("../runconfig");
+
 var net = require('net');
 var defaultBufferSize = 1024;
 var receiveBufferSize = defaultBufferSize;
@@ -9,12 +11,7 @@ var receiveBuffer = new Buffer(defaultBufferSize);
 var receiveOffset = 0;
 var recentDate = new Date();
 
-/**
- * db 的 HOST 以及 PORT 连接(高英健)
- */
-var HOST = '192.100.10.16';
-var PORT = 9251;
-var dbSocket = new net.Socket();
+var dbPushSocket = new net.Socket();
 
 /**
  * 函数名：start
@@ -23,24 +20,25 @@ var dbSocket = new net.Socket();
 function start(){
 
   function connectServer() {
-    var x = dbSocket.connect(PORT, HOST);
+    //HOST和PORT 在ipconfig.json文件中配置
+    var x = dbPushSocket.connect(ipconfig.dbPushPORT, ipconfig.dbPushHOST);
   }
   connectServer();
 
-  dbSocket.on('error', function (error) {
+  dbPushSocket.on('error', function (error) {
     console.log("error : " + error.toString());
   });
 
-  dbSocket.on('close', function () {
+  dbPushSocket.on('close', function () {
     //var recentDate = new Date();
     console.log('connection closed on '+recentDate);
     connectServer();
   });
 
-  dbSocket.on('connect', function () {
+  dbPushSocket.on('connect', function () {
     console.log('【db push】connect Ok.');
   });
-  dbSocket.on('data', function (data) {
+  dbPushSocket.on('data', function (data) {
     //收到 db 推送的消息
     bufferData(data);
   });
@@ -48,9 +46,9 @@ function start(){
 
 /**
  * 函数名：bufferData
- * 功能：用于接收后台返回请求的数据包
+ * 功能：用于接收后台推送的消息的数据包
  * 参数：
- *   data ：返回的数据包信息
+ *   data ：推送的数据包信息
  */
 function bufferData(data){
   //如果当前数据包data的长度大于可用的receiveBuffer，new一个新的receiveData，之后进行旧有数据的拷贝。
@@ -104,7 +102,7 @@ function bufferData(data){
 
 /**
  * 函数名：dealReceiveDataSJ
- * 功能：用于处理所接收的数据包，在此处控制单进程
+ * 功能：用于处理所接收后台推送的数据包
  * 参数 ：
  *   dealDataBuffer ：数据包信息
  */
@@ -112,9 +110,9 @@ function dealReceiveDataSJ(dealDataBuffer) {
 
   var receivePushDataString = dealDataBuffer.toString('utf8', 0);
   // String 转换成 JSON
-  var receivePushDataStr = JSON.parse(receivePushDataString);
+  var receivePushDataJSON = JSON.parse(receivePushDataString);
   console.log(recentDate+':'+'receivePushDataString :' +receivePushDataString);
-  commonSourceServer.dbReceivePushArray.push(receivePushDataStr);
+  commonSourceServer.dbReceivePushArray.push(receivePushDataJSON);
 }
 
 exports.dbPushClientStart = start;

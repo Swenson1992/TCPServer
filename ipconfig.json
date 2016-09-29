@@ -1,0 +1,38 @@
+{
+  //IP的配置文件
+  "name" : "ipconfig",
+  //配置文件说明
+  "description":"用户可通过更改对应项的HOST和PORT配置IP",
+  //配置IP的关键字
+  "keywords":"数据库，elasticsearch，基线，漏扫，运维审计，后台推送",
+  //数据库的HOST和PORT配置
+  "dbIPconfig":{
+    "HOST":"192.100.10.28",
+    "PORT":"9251"
+  },
+  //elasticsearch搜索服务器的HOST和PORT配置
+  "esIPconfig":{
+    "HOST":"192.100.10.28",
+    "PORT":"9252"
+  },
+  //基线的HOST和PORT配置
+  "jxIPconfig":{
+    "HOST":"192.100.10.28",
+    "PORT":"9253"
+  },
+  //漏扫的HOST和PORT配置
+  "lsIPconfig":{
+    "HOST":"192.100.10.28",
+    "PORT":"9254"
+  },
+  //运维审计的HOST和PORT配置
+  "oaIPconfig":{
+    "HOST":"192.100.10.28",
+    "PORT":"9255"
+  },
+  //推送的HOST和PORT配置
+  "dbPushIPconfig":{
+    "HOST":"192.100.10.28",
+    "PORT":"9256"
+  }
+}

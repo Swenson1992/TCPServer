@@ -3,22 +3,18 @@
  */
 
 var commonSourceServer = require("../commonSource");
+var ipconfig = require("../runconfig");
 
 var defaultBufferSize = 1024;
 var receiveBufferSize = defaultBufferSize;
 var receiveBuffer = new Buffer(defaultBufferSize);
 var receiveOffset = 0;
-var receiveDataStr = "";
 var recentDate = new Date();
 
 var net = require('net');
-/**
- * es 的 HOST 以及 PORT 连接(郭乃豪)
- */
-var HOST = '192.100.10.28';
-var PORT = 30001;
+
 var RecentProcess = true;//确保一个进程
-var dbSocket = new net.Socket();
+var esSocket = new net.Socket();
 
 /**
  * 生成 SN 标记，返回 SN 的值
@@ -39,21 +35,21 @@ function getSN(){
 function start(){
 
   function connectServer() {
-    var x = dbSocket.connect(PORT, HOST);
+    var x = esSocket.connect(ipconfig.esPORT, ipconfig.esHOST);
   }
   connectServer();
 
-  dbSocket.on('error', function (error) {
+  esSocket.on('error', function (error) {
     console.log("error : " + error.toString());
   });
 
-  dbSocket.on('close', function () {
+  esSocket.on('close', function () {
     //var recentDate = new Date();
     console.log('connection closed on '+recentDate);
     connectServer();
   });
 
-  dbSocket.on('connect', function () {
+  esSocket.on('connect', function () {
     console.log('connect Ok.');
     setInterval(function(){
       if(!!commonSourceServer.dbStrArray[0]){
@@ -76,7 +72,7 @@ function start(){
       }
     },1000);
   });
-  dbSocket.on('data', function (data) {
+  esSocket.on('data', function (data) {
     //var receiveData = data.toString('utf8', 0);
     //console.log(recentDate+':'+'receiveData :' +receiveData);
     bufferData(data);
@@ -108,7 +104,7 @@ function sendData(RequestStr,SN){
 
   //写入数据
   sendDbBuffer.write(RequestStr, 8);
-  dbSocket.write(sendDbBuffer);
+  esSocket.write(sendDbBuffer);
 }
 
 /**
@@ -176,9 +172,9 @@ function dealReceiveDataSJ(dealDataBuffer) {
 
   var receiveDataString = dealDataBuffer.toString('utf8', 0);
   // String 转换成 JSON
-  receiveDataStr = JSON.parse(receiveDataString);
+  var receiveDataJSON = JSON.parse(receiveDataString);
   console.log(recentDate+':'+'receiveDataString :' +receiveDataString);
-  commonSourceServer.dbReceiveStrArray.push(receiveDataStr);
+  commonSourceServer.dbReceiveStrArray.push(receiveDataJSON);
   //console.log(recentDate+':'+'dbReceiveStrArray[0] :' +commonSourceServer.dbReceiveStrArray[0].resourceType);
   //console.log(recentDate+':'+'dbReceiveStrArray[0] :' +commonSourceServer.dbReceiveStrArray[0].result.songjian);
   RecentProcess = true;

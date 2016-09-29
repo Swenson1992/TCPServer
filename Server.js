@@ -47,69 +47,67 @@ function start(){
     /** 数据库 **/
     if(!!commonSourceServer.dbReceiveStrArray[0]){
       //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
-      var clientName = commonSourceServer.dbNameArray.shift();//客户端名
-      var receiveStr = commonSourceServer.dbReceiveStrArray.shift();
+      var dbClientName = commonSourceServer.dbNameArray.shift();//客户端名
+      var dbReceiveStr = commonSourceServer.dbReceiveStrArray.shift();
 
-      var client = getClientByClientName(clientName);
-      //console.log('client:'+client);
-      var SN = commonSourceServer.dbSN.shift();
-      sendRequestData(receiveStr,SN,client);
+      var dbClient = getClientByClientName(dbClientName);
+      //console.log('dbClient Name:'+dbClient);
+      var dbSN = commonSourceServer.dbSN.shift();
+      sendRequestData(dbReceiveStr,dbSN,dbClient);
     }else{
-      //console.log("dbReceiveStrArray is empty");
-      //console.log('【commonSourceServer.dbNameArray】='+commonSourceServer.dbNameArray);
-      //console.log('【commonSourceServer.dbStrArray】='+commonSourceServer.dbStrArray);
+      //console.log("-----dbReceiveStrArray is empty!-----");
     }
     /** elasticsearch **/
     if(!!commonSourceServer.esReceiveStrArray[0]){
       //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
-      var clientName = commonSourceServer.esNameArray.shift();//客户端名
-      var receiveStr = commonSourceServer.esReceiveStrArray.shift();
+      var esClientName = commonSourceServer.esNameArray.shift();//客户端名
+      var esReceiveStr = commonSourceServer.esReceiveStrArray.shift();
 
-      var client = getClientByClientName(clientName);
-      //console.log('client:'+client);
-      var SN = commonSourceServer.esSN.shift();
-      sendRequestData(receiveStr,SN,client);
+      var esClient = getClientByClientName(esClientName);
+      //console.log('dbClient Name:'+esClient);
+      var esSN = commonSourceServer.esSN.shift();
+      sendRequestData(esReceiveStr,esSN,esClient);
     }else{
-
+      //console.log("-----esReceiveStrArray is empty!-----");
     }
     /** 基线 **/
     if(!!commonSourceServer.jxReceiveStrArray[0]){
       //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
-      var clientName = commonSourceServer.jxNameArray.shift();//客户端名
-      var receiveStr = commonSourceServer.jxReceiveStrArray.shift();
+      var jxClientName = commonSourceServer.jxNameArray.shift();//客户端名
+      var jxReceiveStr = commonSourceServer.jxReceiveStrArray.shift();
 
-      var client = getClientByClientName(clientName);
+      var jxClient = getClientByClientName(jxClientName);
       //console.log('client:'+client);
-      var SN = commonSourceServer.jxSN.shift();
-      sendRequestData(receiveStr,SN,client);
+      var jxSN = commonSourceServer.jxSN.shift();
+      sendRequestData(jxReceiveStr,jxSN,jxClient);
     }else{
-
+      //console.log("-----jxReceiveStrArray is empty!-----");
     }
     /** 漏扫 **/
     if(!!commonSourceServer.lsReceiveStrArray[0]){
       //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
-      var clientName = commonSourceServer.lsNameArray.shift();//客户端名
-      var receiveStr = commonSourceServer.lsReceiveStrArray.shift();
+      var lsClientName = commonSourceServer.lsNameArray.shift();//客户端名
+      var lsReceiveStr = commonSourceServer.lsReceiveStrArray.shift();
 
-      var client = getClientByClientName(clientName);
+      var lsClient = getClientByClientName(lsClientName);
       //console.log('client:'+client);
-      var SN = commonSourceServer.lsSN.shift();
-      sendRequestData(receiveStr,SN,client);
+      var lsSN = commonSourceServer.lsSN.shift();
+      sendRequestData(lsReceiveStr,lsSN,lsClient);
     }else{
-
+      //console.log("-----lsReceiveStrArray is empty!-----");
     }
     /** 运维审计 **/
     if(!!commonSourceServer.oaReceiveStrArray[0]){
       //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
-      var clientName = commonSourceServer.oaNameArray.shift();//客户端名
-      var receiveStr = commonSourceServer.oaReceiveStrArray.shift();
+      var oaClientName = commonSourceServer.oaNameArray.shift();//客户端名
+      var oaReceiveStr = commonSourceServer.oaReceiveStrArray.shift();
 
-      var client = getClientByClientName(clientName);
+      var oaClient = getClientByClientName(oaClientName);
       //console.log('client:'+client);
-      var SN = commonSourceServer.oaSN.shift();
-      sendRequestData(receiveStr,SN,client);
+      var oaSN = commonSourceServer.oaSN.shift();
+      sendRequestData(oaReceiveStr,oaSN,oaClient);
     }else{
-
+      //console.log("-----oaReceiveStrArray is empty!-----");
     }
     /**
      * 检测是否有数据库后台推送告警信息 ，推送至所有连接的客户端client
@@ -120,7 +118,7 @@ function start(){
         sendPushData(receivePushStr,clientList[tag],0);
       }
     }else{
-
+      //console.log("-----dbReceivePushArray is empty!-----");
     }
   },2000);
 

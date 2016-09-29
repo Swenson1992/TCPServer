@@ -3,20 +3,16 @@
  */
 
 var commonSourceServer = require("../commonSource");
+var ipconfig = require("../runconfig");
 
 var defaultBufferSize = 1024;
 var receiveBufferSize = defaultBufferSize;
 var receiveBuffer = new Buffer(defaultBufferSize);
 var receiveOffset = 0;
-var receiveDataStr = "";
 var recentDate = new Date();
 
 var net = require('net');
-/**
- * db 的 HOST 以及 PORT 连接(高英健)
- */
-var HOST = '192.100.10.16';
-var PORT = 9251;
+
 var RecentProcess = true;//确保一个进程
 var dbSocket = new net.Socket();
 
@@ -39,7 +35,8 @@ function getSN(){
 function start(){
 
   function connectServer() {
-    var x = dbSocket.connect(PORT, HOST);
+    //HOST和PORT 在ipconfig.json文件中配置
+    var x = dbSocket.connect(ipconfig.dbPORT, ipconfig.dbHOST);
   }
   connectServer();
 
@@ -179,9 +176,9 @@ function dealReceiveDataSJ(dealDataBuffer) {
 
   var receiveDataString = dealDataBuffer.toString('utf8', 0);
   // String 转换成 JSON
-  receiveDataStr = JSON.parse(receiveDataString);
+  var receiveDataJSON = JSON.parse(receiveDataString);
   console.log(recentDate+':'+'receiveDataString :' +receiveDataString);
-  commonSourceServer.dbReceiveStrArray.push(receiveDataStr);
+  commonSourceServer.dbReceiveStrArray.push(receiveDataJSON);
   //console.log(recentDate+':'+'dbReceiveStrArray[0] :' +commonSourceServer.dbReceiveStrArray[0].resourceType);
   //console.log(recentDate+':'+'dbReceiveStrArray[0] :' +commonSourceServer.dbReceiveStrArray[0].result.songjian);
   RecentProcess = true;
