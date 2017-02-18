@@ -55,7 +55,9 @@ function start() {
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
             flagConnect = 1;
         }
-        connectServer();
+        setTimeout(function(){
+            connectServer();
+        },5000)
     });
 
     jxSocket.on('close', function () {

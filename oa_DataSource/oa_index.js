@@ -42,7 +42,9 @@ function start(client) {
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
             flagConnect = 1;
         }
-        connectServer();
+        setTimeout(function(){
+            connectServer();
+        },5000)
     });
 
     oaSocket.on('close', function () {
@@ -51,7 +53,7 @@ function start(client) {
     });
 
     oaSocket.on('connect', function () {
-        console.log(':[oaSocke] connect Ok.');
+        console.log('[oaSocke] connect Ok.');
         flagConnect == 0;
     });
     oaSocket.on('data', function (data) {
@@ -134,7 +136,7 @@ function bufferData(data, client) {
                 receiveBuffer.copy(dealDataBuffer, 0, 8, 8 + len);
                 if (receiveBuffer.readUInt16BE(0) == 65534) {
                     //处理运维审计返回的应答消息
-                    console.log('收到运维审计返回的消息');
+                    //console.log('收到运维审计返回的消息');
                     dealReceiveDataSJ(dealDataBuffer, SN, client);
                 }
                 else if (receiveBuffer.readUInt16BE(0) == 65533) {

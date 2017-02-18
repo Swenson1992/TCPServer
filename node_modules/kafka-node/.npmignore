@@ -1,0 +1,9 @@
+node_modules
+*.swp
+*.log
+*.swo
+test/data.txt
+docs
+.idea
+coverage
+.DS_Store

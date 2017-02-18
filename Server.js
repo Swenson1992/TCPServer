@@ -1,9 +1,12 @@
 /**
  * Created by songjian on 2016/9/22.
  */
+var url = require("url");
+var utils = require('./utils');
+var es = require("./esDataSource");
+
 var commonSourceServer = require("./commonSource");
 var oAClient = require("./oa_DataSource/oa_index");
-//var fs = require();
 
 var defaultBufferSize = 1024;
 var receiveBufferSize = defaultBufferSize;
@@ -12,6 +15,8 @@ var receiveData = "";
 var receiveOffset = 0;
 var receiveDataString = "";
 var port = 8999;
+
+var recentDate = new Date();
 
 /**
  * 该服务端用于接收前台传过来的请求命令，是db、es、jx、ls、oa的总服务端，
@@ -50,9 +55,18 @@ function start() {
      *推送式: 如果有推送信息，则推送给每一个客户端
      */
     commonSourceServer.EventEmitter.addListener("receiveDBData", function () {
-        console.log("into receiveDBData EventEmitter addListener!!!!");
+        //console.log("into receiveDBData EventEmitter addListener!!!!");
         /** 数据库 **/
-        if (!!commonSourceServer.dbReceiveStrArray[0]) {
+        var ResponseSendStartTime = new Date();
+        console.log("[EventEmitter ResponseSendStart Time: "+ResponseSendStartTime+"]");
+        var dbClientName = commonSourceServer.dbNameArray.shift();//客户端名
+        var dbReceiveStr = commonSourceServer.dbReceiveStrArray.shift();
+
+        var dbClient = getClientByClientName(dbClientName);
+        //console.log('dbClient Name:'+dbClient);
+        var dbSN = commonSourceServer.dbSN.shift();
+        sendResponseData(dbReceiveStr, dbSN, dbClient);
+        /*if (!!commonSourceServer.dbReceiveStrArray[0]) {
             //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
             var dbClientName = commonSourceServer.dbNameArray.shift();//客户端名
             var dbReceiveStr = commonSourceServer.dbReceiveStrArray.shift();
@@ -63,10 +77,10 @@ function start() {
             sendResponseData(dbReceiveStr, dbSN, dbClient);
         } else {
             //console.log("-----dbReceiveStrArray is empty!-----");
-        }
+        }*/
     })
     commonSourceServer.EventEmitter.addListener("receiveESData", function () {
-        console.log("into receiveESData EventEmitter addListener!!!!");
+        //console.log("into receiveESData EventEmitter addListener!!!!");
         /** elasticsearch **/
         if (!!commonSourceServer.esReceiveStrArray[0]) {
             //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
@@ -82,7 +96,7 @@ function start() {
         }
     })
     commonSourceServer.EventEmitter.addListener("receiveGJData", function () {
-        console.log("into receiveGJData EventEmitter addListener!!!!");
+        //console.log("into receiveGJData EventEmitter addListener!!!!");
         /** 告警 **/
         if (!!commonSourceServer.gjReceiveStrArray[0]) {
             console.log('commonSourceServer.gjReceiveStrArray[0]:' + commonSourceServer.gjReceiveStrArray[0]);
@@ -96,7 +110,7 @@ function start() {
         }
     })
     commonSourceServer.EventEmitter.addListener("receiveJXData", function () {
-        console.log("into receiveJXData EventEmitter addListener!!!!");
+        //console.log("into receiveJXData EventEmitter addListener!!!!");
         /** 基线 **/
         if (commonSourceServer.jxReceiveStrArray[0] === 0 || !!commonSourceServer.jxReceiveStrArray[0]) {
             //console.log('commonSourceServer.jxReceiveStrArray[0]:'+commonSourceServer.jxReceiveStrArray[0]);
@@ -112,7 +126,7 @@ function start() {
         }
     })
     commonSourceServer.EventEmitter.addListener("receiveLSData", function () {
-        console.log("into receiveLSData EventEmitter addListener!!!!");
+        //console.log("into receiveLSData EventEmitter addListener!!!!");
         /** 漏扫 **/
         if (!!commonSourceServer.lsReceiveStrArray[0]) {
             //console.log('commonSourceServer.dbReceiveStrArray[0]:'+commonSourceServer.dbReceiveStrArray[0]);
@@ -133,8 +147,7 @@ function start() {
          */
         if (!!commonSourceServer.gjReceivePushArray[0]) {
             var receivePushStr = commonSourceServer.gjReceivePushArray.shift();
-            console.log(typeof receivePushStr);
-            console.log("receivePushStr:" + receivePushStr);
+            //console.log("receivePushStr:" + JSON.stringify(receivePushStr));
             for (var tag = 0; tag < clientList.length; tag++) {
                 sendPushData(receivePushStr, 0, clientList[tag]);
                 //console.log('gj sendPushData clientList[] = '+clientList[tag].name);
@@ -147,7 +160,7 @@ function start() {
         /**
          * 返回所连接的客户端 Name 和 remotePort
          */
-        console.log("into returnClientName EventEmitter addListener!!!!");
+        //console.log("into returnClientName EventEmitter addListener!!!!");
         if (!!clientListName) {
 
             var yxClientName = commonSourceServer.yxNameArray.shift();//客户端名
@@ -167,30 +180,27 @@ function start() {
             remoteAddress: client.remoteAddress.slice(7),
             remotePort: client.remotePort,
             connectState:"连接中",
-            "TYPE": "501"
+            "TYPE": "701"
         };
 
         var oaSocket = oAClient.oaClientStart(client);
-        console.log('client name :' + client.name.remoteAddress + ':' + client.name.remotePort);
+        //console.log('client name :' + client.name.remoteAddress + ':' + client.name.remotePort);
         commonSourceServer.clientLogFile.info('Client ' + client.name.remoteAddress + ':' + client.name.remotePort + ' connected');
 
         clientList.push(client);
         clientListName.push(client.name);
         commonSourceServer.gjReceivePushArray.push(clientListName);
         commonSourceServer.EventEmitter.emit("receiveGJPushData");
-        // console.log(client);
-        //console.log("clientListName : " + JSON.stringify(clientListName));
 
         client.on('data', function (data) {
             commonSourceServer.requestLogFile.info('收到 ' + client.name.remoteAddress + ' 的客户端侧请求信息：' + data.toString('utf8', 0));
             /*添加事件监听器，这样就可以访问到连接事件所对应的client对象，当client发送数据给服务器时，这一事件就会触发*/
-            //data1= bufferData(data,client.name);
             /*
              * 区分运维审计和其他数据源
              * 运维审计：多个socket；
              * */
             try {
-                bufferData(data, client.name, oaSocket);
+        	bufferData(data,client.name,oaSocket,client);
             }
             catch (err) {
                 commonSourceServer.errorLogFile.error(client.name.remoteAddress + ":Server.js [line:141] bufferData function err :" + err);
@@ -200,23 +210,21 @@ function start() {
         client.on('end', function () {
             var recentEndDate = new Date();
             oaSocket.end();
-            console.log('end Client : ' + client.name.remoteAddress + ':' + client.name.remotePort + ' is quited in ' + recentEndDate);
             //如果某个客户端断开连接，node控制台就会打印出来
+            //console.log("splice before clientList end :"+clientList);
             clientList.splice(clientList.indexOf(client), 1);
+            //console.log("splice after clientList end :"+clientList);
             for (var temp = 0; temp < clientListName.length; temp++) {
                 //console.log(clientListName.length);
                 //console.log(clientListName[temp]);
                 if (clientListName[temp].remotePort === client.name.remotePort) {
-                    commonSourceServer.clientLogFile.info('Client ' + client.name.remoteAddress + ':' + client.name.remotePort + ' exited');
+                    commonSourceServer.clientLogFile.info('Client ' + client.name.remoteAddress + ':' + client.name.remotePort + ' exited ' + recentEndDate);
                     clientListName.splice(temp, 1);
                     break;
                 }
             }
-            //clientListName.splice(clientListName.indexOf(client.name.remotePort), 1);
-            //console.log("clientListName:"+JSON.stringify(clientListName));
             commonSourceServer.gjReceivePushArray.push(clientListName);
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
-            //clientListName.splice(clientListName.indexOf(client.name.remotePort), 1);
         });
         /*记录错误*/
         client.on('error', function (e) {
@@ -224,22 +232,21 @@ function start() {
         });
         //监听客户端关闭
         client.on('close', function () {
-            var recentDate = new Date();
-            console.log('close Client ' + client.name.remoteAddress + ':' + client.name.remotePort + ' is closed in ' + recentDate);
+            var recentCloseDate = new Date();
             //如果某个客户端关闭，node控制台就会打印出来
             oaSocket.end();
+            //console.log("splice before clientList:"+clientList);
             clientList.splice(clientList.indexOf(client), 1);
+            //console.log("splice after clientList:"+clientList);
             for (var temp = 0; temp < clientListName.length; temp++) {
                 //console.log(clientListName.length);
                 //console.log(clientListName[temp]);
                 if (clientListName[temp].remotePort === client.name.remotePort) {
-                    commonSourceServer.clientLogFile.info('Client ' + client.name.remoteAddress + ':' + client.name.remotePort + ' exited');
+                    commonSourceServer.clientLogFile.info('Client ' + client.name.remoteAddress + ':' + client.name.remotePort + ' closed '+ recentCloseDate);
                     clientListName.splice(temp, 1);
                     break;
                 }
             }
-            //clientListName.splice(clientListName.indexOf(client.name.remotePort), 1);
-            console.log("clientListName:" + JSON.stringify(clientListName));
             commonSourceServer.gjReceivePushArray.push(clientListName);
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
         });
@@ -260,8 +267,8 @@ function start() {
  */
 function sendResponseData(ReceiveStr, SN, client) {
     var receiveStr = JSON.stringify(ReceiveStr);
-    commonSourceServer.responseLogFile.info('sendResponseData ReceiveStr is:' + receiveStr);
-    //console.log('sendResponseData ReceiveStr is:'+receiveStr);
+    //commonSourceServer.responseLogFile.info('sendResponseData ReceiveStr is:' + receiveStr);
+    console.log('sendResponseData ReceiveStr is:'+receiveStr);
     var len = Buffer.byteLength(receiveStr);
 
     var sendDbBuffer = new Buffer(len + 8);
@@ -281,6 +288,8 @@ function sendResponseData(ReceiveStr, SN, client) {
     sendDbBuffer.write(receiveStr, 8);
     try {
         client.write(sendDbBuffer);
+        var ResponseSendEndTime = new Date();
+        console.log("[ResponseSendEnd Time: "+ResponseSendEndTime+"]");
     } catch (err) {
         commonSourceServer.errorLogFile.error("client.write(sendDbBuffer) err" + err);
     }
@@ -372,7 +381,7 @@ function sendPushData(ReceivePushStr, SN, client) {
  *   data ：数据包信息
  *   clientName ：客户端名称
  */
-function bufferData(data, clientName, oaSocket) {
+function bufferData(data,clientName,oaSocket,client){
     //如果当前数据包data的长度大于可用的receiveBuffer，new一个新的receiveData，之后进行旧有数据的拷贝。
     while (data.length > receiveBufferSize - receiveOffset) {
         var dataNeedBufferSize = data.length - (receiveBufferSize - receiveOffset);//本次data需要的buffer大小为本data长度减去receiveBuffer中空闲buffer的大小。
@@ -400,7 +409,7 @@ function bufferData(data, clientName, oaSocket) {
                 //根据len取出本次要处理的数据到dealDataBuffer，然后交由dealRequestData函数处理
                 var dealDataBuffer = new Buffer(len);
                 receiveBuffer.copy(dealDataBuffer, 0, 8, 8 + len);
-                dealRequestData(dealDataBuffer, clientName, SN, oaSocket);
+                dealRequestData(dealDataBuffer, clientName, SN, oaSocket,client);
                 //计算出剩余的buffer的大小，从receiveBuffer中拷贝出剩余数据到leftReceiveBuffer，再将leftReceiveBuffer重新赋给receiveBuffer。
                 var leftBufferSize = receiveOffset - (8 + len);
                 var leftReceiveBuffer = new Buffer(leftBufferSize);
@@ -437,19 +446,63 @@ function dealRequestData(dealDataBuffer, clientName, SN, oaSocket) {
     } catch (err) {
         commonSourceServer.errorLogFile.error(clientName + ":Server.js dealRequestData function receiveData = JSON.parse(receiveDataString) err :" + err);
     }
-    commonSourceServer.infoLogFile.info(clientName + ':DataExchange 收到' + receiveData.resourceType + '的请求消息 ：' + receiveDataString);
+    //commonSourceServer.infoLogFile.info(clientName + ':DataExchange 收到' + receiveData.resourceType + '的请求消息 ：' + receiveDataString);
+    console.log('DataExchange 收到' + receiveData.resourceType + '的请求消息 ：' + receiveDataString);
     switch (receiveData.resourceType) {
         case 'db':
             commonSourceServer.dbStrArray.push(receiveData.requestStr);
             commonSourceServer.dbNameArray.push(clientName);
             commonSourceServer.dbSN.push(SN);
+            var receiveRequestTime = new Date();
+            console.log("[receiveRequestTime: "+receiveRequestTime+"]");
             commonSourceServer.EventEmitter.emit("sendDBRequest");
+            var sendRequestEndTime = new Date();
+            console.log("[sendRequestEndTime: "+sendRequestEndTime+"]");
             break;
         case 'es':
             commonSourceServer.esStrArray.push(receiveData.requestStr);
             commonSourceServer.esNameArray.push(clientName);
             commonSourceServer.esSN.push(SN);
-            commonSourceServer.EventEmitter.emit("sendESRequest");
+     	    var query = decodeURI(url.parse(receiveData.url).query);
+
+            var paraArray = [];
+            paraArray.push(successProcess);
+            paraArray.push(errorProcess);
+            var queryType = "get"+utils.getUrlQueryString(query,'t');
+            console.log("queryType : "+queryType);
+            var ip = utils.getUrlQueryString(query,'ip');
+            if(ip != ""){paraArray.push(ip)}
+            var date = utils.getUrlQueryString(query,'date');
+            paraArray.push(date);
+            var endDate = utils.getUrlQueryString(query,'endDate');
+            paraArray.push(endDate);
+            var warningLevels = utils.getUrlQueryString(query,'warningLevels');
+            paraArray.push(warningLevels);
+            var searchDetails = utils.getUrlQueryString(query,'searchDetails');
+            paraArray.push(searchDetails);
+            var offSet = utils.getUrlQueryString(query,'offset');
+            paraArray.push(offSet);
+            var limitValue =  utils.getUrlQueryString(query,'limit');
+            paraArray.push(limitValue);
+            var sortName =  utils.getUrlQueryString(query,'sortName');
+            paraArray.push(sortName);
+            var sortOrder =  utils.getUrlQueryString(query,'sortOrder');
+            paraArray.push(sortOrder);
+            var id = utils.getUrlQueryString(query,'id');
+            paraArray.push(id);
+
+            es[queryType].apply(this,paraArray);
+
+
+
+            function successProcess(returnData){
+                var receiveStr = returnData;
+                sendResponseData(receiveStr,SN,client);
+            }
+            function errorProcess(error){
+                var receiveStr = error;
+                sendResponseData(receiveStr,SN,client);
+            }
             break;
         case 'jx':
             commonSourceServer.jxStrArray.push(receiveData.requestStr);
@@ -470,7 +523,7 @@ function dealRequestData(dealDataBuffer, clientName, SN, oaSocket) {
             commonSourceServer.gjStrArray.push(receiveData.requestStr);
             commonSourceServer.gjNameArray.push(clientName);
             commonSourceServer.gjSN.push(SN);
-            //commonSourceServer.EventEmitter.emit("sendGJRequest");
+            commonSourceServer.EventEmitter.emit("sendGJRequest");
             break;
         case 'yx':
             commonSourceServer.yxStrArray.push(receiveData.requestStr);

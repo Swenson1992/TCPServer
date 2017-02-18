@@ -17,7 +17,7 @@
   },
   //elasticsearch搜索服务器的HOST和PORT配置
   "esIPconfig":{
-    "HOST":"192.100.10.28",
+    "HOST":"192.100.20.13",
     "PORT":"9258"
   },
   //基线的HOST和PORT配置
@@ -27,7 +27,7 @@
   },
   //漏扫的HOST和PORT配置
   "lsIPconfig":{
-    "HOST":"192.100.10.25",
+    "HOST":"192.100.20.13",
     "PORT":"9252"
   },
   //运维审计的HOST和PORT配置

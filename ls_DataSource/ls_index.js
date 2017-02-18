@@ -30,7 +30,9 @@ fs.readFile(lsSessionFile, function (err, bytesRead) {
     if (err) {
         commonSourceServer.errorLogFile.error("ls_index.js fs.readFile lsSessionFile err :" + err);
     } else {
+
         recentThirdSessionId = bytesRead.toString('utf8', 0);
+        //console.log("recentThirdSessionId:"+recentThirdSessionId);
     }
 });
 
@@ -74,7 +76,9 @@ function start() {
             flagConnect = 1;
             console.log('lsSocket connection closed on ' + recentDate);
         }
-        connectServer();
+        setTimeout(function(){
+            connectServer();
+        },5000)
     });
 
     lsSocket.on('close', function () {
@@ -241,7 +245,7 @@ function dealReceiveDataSJ(dealDataBuffer) {
     } catch (err) {
         commonSourceServer.errorLogFile.error("ls_index.js dealReceiveData function receiveDataJSON = JSON.parse(receiveDataString) err :" + err);
     }
-    if (receiveDataJSON["value"] == 0 && receiveDataJSON["desc"] == 2) {//提示用户未登陆，需要重新登陆
+    if ((receiveDataJSON["value"] == 0 && receiveDataJSON["desc"] == 2) || receiveDataJSON["code"] == 0) {//提示用户未登陆，需要重新登陆
         //  console.log("提示用户未登陆，需要重新登陆");
         var requestObj = {username: "user", password: "pwd"};//登陆的请求体
         var requestStr = JSON.stringify(requestObj);
@@ -269,6 +273,7 @@ function dealReceiveDataSJ(dealDataBuffer) {
         loginFlag = false;
         sendData(recentRequestStr, recentSN);//再次发送
     } else {
+        console.log("receiveDataJSON:"+JSON.stringify(receiveDataJSON));
         commonSourceServer.lsReceiveStrArray.push(receiveDataJSON);
         RecentProcess = true;
         commonSourceServer.EventEmitter.emit("receiveLSData");

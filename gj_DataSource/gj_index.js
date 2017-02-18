@@ -4,6 +4,8 @@
 
 var commonSourceServer = require("../commonSource");
 var ipconfig = require("../runconfig");
+var dgram = require('dgram');
+var client = dgram.createSocket("udp4");
 
 var defaultBufferSize = 1024;
 var receiveBufferSize = defaultBufferSize;
@@ -17,6 +19,7 @@ var RecentProcess = true;//确保消息排队接收
 var gjSocket = new net.Socket();
 
 var flagConnect = 0;
+var FlagWindowsOs = true;
 
 /**
  * 生成 SN 标记，返回 SN 的值
@@ -57,7 +60,9 @@ function start() {
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
             flagConnect = 1;
         }
-        connectServer();
+        setTimeout(function(){
+            connectServer();
+        },5000)
     });
 
     gjSocket.on('close', function () {
@@ -68,42 +73,30 @@ function start() {
     gjSocket.on('connect', function () {
         console.log('[gjSocket] connect Ok.');
         flagConnect = 0;
-      /*  commonSourceServer.EventEmitter.on("sendGJRequest", function () {
+        commonSourceServer.EventEmitter.on("sendGJRequest", function () {
+            //console.log("1111"+commonSourceServer.gjStrArray[0]);
             if (!!commonSourceServer.gjStrArray[0]) {
-                if (RecentProcess) {
-                    /!**
-                     * 将请求信息重新做包发送给后台
-                     **!/
-                    var RequestStr = commonSourceServer.gjStrArray.shift();
-
-                    var SN = getSN();
-                    commonSourceServer.gjRequestSN.push(SN);
-                    console.log("gj RequestStr:" + RequestStr);
-                    sendData(RequestStr, SN);
-                }
-            }
-            else {
+                /**
+                 * 将请求信息重新做包发送给后台
+                 **/
+                var RequestStr = commonSourceServer.gjStrArray.shift();
+                var SN = getSN();
+                commonSourceServer.gjRequestSN.push(SN);
+                console.log("gj RequestStr:" + RequestStr);
+                sendData(RequestStr, SN);
+            } else {
                 //console.log('[else RecentProcess]:' + RecentProcess);
             }
-        })*/
+        })
+        processRestart();
         setInterval(function () {
-            if (!!commonSourceServer.gjStrArray[0]) {
-                if (RecentProcess) {
-                    /**
-                     * 将请求信息重新做包发送给后台
-                     **/
-                    var RequestStr = commonSourceServer.gjStrArray.shift();
+            /*发送DataExchange程序的CPU使用率和内存占用率*/
+            if(!FlagWindowsOs){
+                getDataExCpuAndMem();
+            }else{
+            }
 
-                    var SN = getSN();
-                    commonSourceServer.gjRequestSN.push(SN);
-                    console.log("gj RequestStr:" + RequestStr);
-                    sendData(RequestStr, SN);
-                }
-            }
-            else {
-                //console.log('[else RecentProcess]:' + RecentProcess);
-            }
-        }, 100);
+        }, 60000);
     });
     gjSocket.on('data', function (data) {
         try {
@@ -113,7 +106,99 @@ function start() {
         }
     });
 }
+/*
+* 获取当前时间
+* 返回格式 2016-12-01 19:19:19
+* */
+function getRecentDate(){
+    var d = new Date();
+    var years = d.getFullYear();
+    var month = add_zero(d.getMonth() + 1);
+    var days = add_zero(d.getDate());
+    var hours = add_zero(d.getHours());
+    var minutes = add_zero(d.getMinutes());
+    var seconds = add_zero(d.getSeconds());
+    return years + "-" + month + "-" + days + " " + hours + ":" + minutes + ":" + seconds;
+}
 
+function add_zero(temp) {
+    if (temp < 10) return "0" + temp;
+    else return temp;
+}
+
+/*
+* 获取当前主机IP 或 主机名
+* */
+function getClientIp(){
+    var os = require('os');
+    var IPv4,hostName;
+    //hostName = os.hostname();  主机名
+    for(var i=0;i<os.networkInterfaces().bond0.length;i++){
+        if(os.networkInterfaces().bond0[i].family=='IPv4'){
+            IPv4=os.networkInterfaces().bond0[i].address;
+        }
+    }
+    return IPv4;
+}
+
+/*
+* DataExchange启动或者重启 通知后台(卢楷)
+* 格式
+*     <2> 2016-11-30 11:40:00 主机IP MONITOR 0 1 进程名 程序版本
+* */
+function processRestart(){
+    var notifyDataExchange = [];
+    var clientIp = "";
+    if(!FlagWindowsOs){
+        clientIp = getClientIp();
+    }else{
+        clientIp = "192.100.20.13";
+    }
+    //notifyDataExchange.push("<2> "+getRecentDate()+" "+clientIp+" MONITOR 0 1 DataExchange V1.2");
+    notifyDataExchange.push("<2> "+getRecentDate()+" "+clientIp+" MONITOR 0 0 DataExchange 68.21 20.35");
+    var notifyDataString = notifyDataExchange.join('');
+    console.log("notifyDataString:"+notifyDataString);
+    var message = new Buffer(notifyDataString);
+    client.send(message, 0, message.length, 7785, "192.100.20.13", function(err, bytes) {
+        console.log("UDP send success!"+bytes);
+        //client.close();
+    });
+}
+
+/*
+* 获取DataExchange的CPU和MEM的使用率和占用率
+* 格式
+*     <2> 2016-11-30 11:40:00 主机IP MONITOR 0 0 进程名 CPU利用率 内存利用率
+* */
+function getDataExCpuAndMem(){
+    var exec = require('child_process').exec;
+    exec('ps aux | grep index.js | grep -v grep | cut -c 16-20', function (error, stdout, stderr) {
+        if (error !== null) {
+            console.log('exec error: ' + error);
+        } else {
+            var reg = /\d+\.\d+/;
+            var nodeCpu = stdout.match(reg);
+            exec('ps aux | grep index.js | grep -v grep | cut -c 21-25', function (error, mem, stderr) {
+                if (error !== null) {
+                    console.log('exec error: ' + error);
+                } else {
+                    var nodeMem = mem.match(reg);
+                    var stringData = [];
+                    var recentDate = getRecentDate();
+                    var ip = getClientIp();
+                    stringData.push("<2> "+recentDate+" "+ip+" MONITOR 0 0 DataExchange "+nodeCpu+" "+nodeMem);
+                    //console.log(JSON.stringify(stringData.join('')));
+                    var processInformation = stringData.join('');
+                    var message = new Buffer(processInformation);
+                    client.send(message, 0, message.length, 7785, "192.100.20.13", function(err, bytes) {
+                        console.log("UDP send success!"+bytes);
+                        client.close();
+                    });
+                }
+            })
+        }
+    });
+}
 /**
  * 函数名：sendData
  * 功能 ：将前台请求信息传送给后台 gj 服务端
@@ -230,6 +315,7 @@ function dealReceiveData(dealDataBuffer, SN) {
     }
     commonSourceServer.gjReceiveStrArray.push(receiveDataJSON);
     commonSourceServer.EventEmitter.emit("receiveGJData");
+    commonSourceServer.EventEmitter.emit("sendGJRequest");
 }
 
 /**
@@ -250,10 +336,9 @@ function dealReceivePushData(dealDataBuffer, SN) {
     } catch (err) {
         commonSourceServer.errorLogFile.error("gj_index.js dealReceivePushData function receivePushDataJSON = JSON.parse(receivePushDataString) err :" + err);
     }
-    console.log('receiveDataString :' + receivePushDataJSON);
+    //console.log('receiveDataString :' + receivePushDataJSON);
     commonSourceServer.gjReceivePushArray.push(receivePushDataJSON);
     commonSourceServer.EventEmitter.emit("receiveGJPushData");
-    commonSourceServer.EventEmitter.emit("sendGJRequest");
 }
 
 exports.gjClientStart = start;

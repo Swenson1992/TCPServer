@@ -57,11 +57,13 @@ function start() {
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
             flagConnect = 1;
         }
-        connectServer();
+        setTimeout(function(){
+            connectServer();
+        },5000)
     });
 
     dbSocket.on('close', function () {
-        console.log('dbSocket connection closed on ' + recentDate);
+       //console.log('dbSocket connection closed on ' + recentDate);
        // connectServer();
     });
 
@@ -69,24 +71,31 @@ function start() {
         console.log('[dbSocket] connect Ok.');
         flagConnect = 0;
         commonSourceServer.EventEmitter.on("sendDBRequest", function () {
-            if (!!commonSourceServer.dbStrArray[0]) {
+            var EventEmitterSendDBRequestTime = new Date();
+            console.log("[ EventEmitter SendDBRequest Time : "+EventEmitterSendDBRequestTime+" ]");
+            var RequestStr = commonSourceServer.dbStrArray.shift();
+            //console.log(recentDate+':'+"RequestStr :"+RequestStr);
+            var SN = getSN();
+            commonSourceServer.dbRequestSN.push(SN);
+            sendData(RequestStr, SN);
+            /*if (!!commonSourceServer.dbStrArray[0]) {
                 //console.log("dbStrArray :"+commonSourceServer.dbStrArray[0]);
                 //console.log("count : "+RecentProcess);
-                if (RecentProcess) {
+
+               /!* if (RecentProcess) {
                     //console.log(recentDate+':'+"dbStrArray :"+commonSourceServer.dbStrArray[0]);
-                    /**
+                    /!**
                     * 将请求信息重新做包发送给后台
-                    **/
+                    **!/
                     var RequestStr = commonSourceServer.dbStrArray.shift();
                     //console.log(recentDate+':'+"RequestStr :"+RequestStr);
                     var SN = getSN();
                     commonSourceServer.dbRequestSN.push(SN);
                     sendData(RequestStr, SN);
-                    RecentProcess = false;
-                }
+                }*!/
             } else {
                 //console.log('[else RecentProcess]:' + RecentProcess);
-            }
+            }*/
         })
         /*setInterval(function () {
             if (!!commonSourceServer.dbStrArray[0]) {
@@ -111,6 +120,8 @@ function start() {
     });
     dbSocket.on('data', function (data) {
         try {
+            var receiveResponseTime = new Date();
+            console.log("[receiveResponseTime: "+receiveResponseTime+"]");
             bufferData(data);
         } catch (err) {
             commonSourceServer.errorLogFile.error("db_index.js bufferData function err :" + err);
@@ -127,6 +138,7 @@ function start() {
  */
 function sendData(RequestStr, SN) {
     commonSourceServer.requestLogFile.info("[db_index sendData]client send Data to DB Server:" + RequestStr);
+    console.log("[db_index sendData]client send Data to DB Server:" + RequestStr);
     var len = Buffer.byteLength(RequestStr);
 
     var sendDbBuffer = new Buffer(len + 8);
@@ -145,6 +157,8 @@ function sendData(RequestStr, SN) {
     try {
         sendDbBuffer.write(RequestStr, 8);
         dbSocket.write(sendDbBuffer);
+        var SendRequestSuccessTime = new Date();
+        console.log("[ SendRequestSuccessTime : "+SendRequestSuccessTime+" ]");
     } catch (err) {
         commonSourceServer.errorLogFile.error("db_index.js sendData function sendDbBuffer.write(RequestStr, 8) err :" + err);
     }
@@ -214,7 +228,7 @@ function bufferData(data) {
 function dealReceiveData(dealDataBuffer) {
 
     var receiveDataString = dealDataBuffer.toString('utf8', 0);
-    commonSourceServer.responseLogFile.info(" DB Server response data :" + receiveDataString);
+    //commonSourceServer.responseLogFile.info(" DB Server response data :" + receiveDataString);
     // String 转换成 JSON
     var receiveDataJSON;
     try {
@@ -223,7 +237,6 @@ function dealReceiveData(dealDataBuffer) {
         commonSourceServer.errorLogFile.error("db_index.js dealReceiveData function receiveDataJSON = JSON.parse(receiveDataString) err :" + err);
     }
     commonSourceServer.dbReceiveStrArray.push(receiveDataJSON);
-    RecentProcess = true;
     commonSourceServer.EventEmitter.emit("receiveDBData");
     commonSourceServer.EventEmitter.emit("sendDBRequest");
 }
