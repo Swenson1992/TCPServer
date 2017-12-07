@@ -16,7 +16,7 @@ var server = require("./Server");
 dbClient.dbClientStart();
 //gjClient.gjClientStart();
 //esClient.esClientStart();
-jxClient.jxClientStart();
-lsClient.lsClientStart();
+//jxClient.jxClientStart();
+//lsClient.lsClientStart();
 
 server.serverStart();
