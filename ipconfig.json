@@ -1,38 +1,22 @@
 {
-  //IP的配置文件
-  "name" : "ipconfig",
-  //配置文件说明
-  "description":"用户可通过更改对应项的HOST和PORT配置IP，也可自己增加！",
-  //配置IP的关键字
-  "keywords":"数据库，告警，elasticsearch，基线，漏扫，运维审计，后台推送",
-  //数据库的HOST和PORT配置
-  "dbIPconfig":{
-    "HOST":"192.100.20.13",
-    "PORT":"9251"
-  },
-  //告警的HOST和PORT配置
-  "gjIPconfig":{
-    "HOST":"192.100.20.13",
-    "PORT":"7781"
-  },
-  //elasticsearch搜索服务器的HOST和PORT配置
-  "esIPconfig":{
-    "HOST":"192.100.10.28",
-    "PORT":"9258"
-  },
-  //基线的HOST和PORT配置
-  "jxIPconfig":{
-    "HOST":"192.100.20.13",
-    "PORT":"9253"
-  },
-  //漏扫的HOST和PORT配置
-  "lsIPconfig":{
-    "HOST":"192.100.10.25",
-    "PORT":"9252"
-  },
-  //运维审计的HOST和PORT配置
-  "oaIPconfig":{
-    "HOST":"192.100.20.101",
-    "PORT":"30001"
-  }
+  //DataBase的HOST和PORT配置
+  "dbIPconfig": {
+    "HOST": "192.100.20.13",
+    "PORT": "9251"
+   },
+  //CVSInterface的HOST和PORT配置
+  "jxIPconfig": {
+    "HOST": "192.100.20.13",
+    "PORT": "65001"
+   },
+  //VBSInterface的HOST和PORT配置
+  "lsIPconfig": {
+    "HOST": "192.100.20.13",
+    "PORT": "65002"
+   },
+  //elasticsearch的HOST和PORT配置
+  "esIPconfig": {
+    "HOST": "192.100.20.13",
+    "PORT": "9200"
+   }
 }

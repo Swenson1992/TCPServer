@@ -15,6 +15,8 @@ var net = require('net');
 var RecentProcess = true;//确保一个进程
 var jxSocket = new net.Socket();
 
+var recentRequestStr;//记录当前的RequestStr，在发送时如果后台程序掉线，利用这里的记录值进行重发
+var recentSN;//记录当前的SN，在发送时如果后台程序掉线，利用这里的记录值进行重发
 var flagConnect = 0;
 
 /**
@@ -28,6 +30,7 @@ function getSN() {
     }
     return SNMax;
 }
+var reconnectFlag = false;
 
 /**
  * 函数名：start
@@ -37,7 +40,13 @@ function getSN() {
 function start() {
 
     function connectServer() {
-        var x = jxSocket.connect(ipconfig.jxPORT, ipconfig.jxHOST);
+        var x;
+        if (reconnectFlag) {
+            jxSocket.end();
+            x = jxSocket.connect(ipconfig.jxPORT, ipconfig.jxHOST);
+        } else {
+            x = jxSocket.connect(ipconfig.jxPORT, ipconfig.jxHOST);
+        }
     }
 
     connectServer();
@@ -46,8 +55,8 @@ function start() {
         if (flagConnect == 0) {
             commonSourceServer.errorLogFile.error('jxSocket Error :' + error.toString());
             var connectError = {
-                "TYPE":"604",
-                "content" : "与基线后台通信失败！"
+                "TYPE": "604",
+                "content": "与基线后台通信失败！"
             }
             var ErrorArray = [];
             ErrorArray.push(connectError);
@@ -55,18 +64,26 @@ function start() {
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
             flagConnect = 1;
         }
-        connectServer();
     });
-
+    var runInternal;
     jxSocket.on('close', function () {
         //var recentDate = new Date();
-        console.log('jxSocket connection closed on ' + recentDate);
-
+        commonSourceServer.errorLogFile.error('jxSocket connection closed on ' + recentDate);
+        runInternal = setInterval(function(){
+            connectServer();
+        }, 30000);
+        //console.log('jxSocket connection closed on ' + recentDate);
+        reconnectFlag = true;
     });
 
     jxSocket.on('connect', function () {
         console.log('[jxSocket] connect Ok.');
         flagConnect = 0;
+        clearInterval(runInternal);
+        if(!RecentProcess){
+            RecentProcess = false;
+            sendData(recentRequestStr, recentSN);
+	}
         commonSourceServer.EventEmitter.on("sendJXRequest", function () {
             if (!!commonSourceServer.jxStrArray[0]) {
                 //console.log("jxStrArray :"+commonSourceServer.jxStrArray[0]);
@@ -79,6 +96,8 @@ function start() {
                     var RequestStr = commonSourceServer.jxStrArray.shift();
                     //console.log(recentDate+':'+"RequestStr :"+RequestStr);
                     var SN = getSN();
+                    recentRequestStr = RequestStr;
+                    recentSN = SN;
                     commonSourceServer.jxRequestSN.push(SN);
                     sendData(RequestStr, SN);
                     RecentProcess = false;
@@ -202,6 +221,7 @@ function dealReceiveDataSJ(dealDataBuffer) {
     try {
         receiveDataJSON = JSON.parse(receiveDataString);
     } catch (err) {
+        receiveDataJSON = receiveDataString;
         commonSourceServer.errorLogFile.error("jx_index.js dealReceiveData function receiveDataJSON = JSON.parse(receiveDataString) err :" + err);
     }
     //console.log(" JX Server response receiveDataJSON:"+receiveDataJSON);

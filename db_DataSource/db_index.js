@@ -16,6 +16,8 @@ var net = require('net');
 var RecentProcess = true;//确保消息排队接收
 var dbSocket = new net.Socket();
 
+var recentRequestStr;//记录当前的RequestStr，在发送时如果后台程序掉线，利用这里的记录值进行重发
+var recentSN;//记录当前的SN，在发送时如果后台程序掉线，利用这里的记录值进行重发
 var flagConnect = 0;
 
 /**
@@ -29,6 +31,7 @@ function getSN() {
     }
     return SNMax;
 }
+var reconnectFlag = false;
 
 /**
  * 函数名：start
@@ -38,8 +41,13 @@ function getSN() {
 function start() {
 
     function connectServer() {
-        //HOST和PORT 在ipconfig.json文件中配置
-        var x = dbSocket.connect(ipconfig.dbPORT, ipconfig.dbHOST);
+        var x;
+        if (reconnectFlag) {
+            dbSocket.end();
+            x = dbSocket.connect(ipconfig.dbPORT, ipconfig.dbHOST);
+        } else {
+            x = dbSocket.connect(ipconfig.dbPORT, ipconfig.dbHOST);
+        }
     }
 
     connectServer();
@@ -48,8 +56,8 @@ function start() {
         if (flagConnect == 0) {
             commonSourceServer.errorLogFile.error('dbSocket Error :' + error.toString());
             var connectError = {
-                "TYPE":"601",
-                "content" : "与数据库后台通信失败！"
+                "TYPE": "601",
+                "content": "与数据库后台通信失败！"
             }
             var ErrorArray = [];
             ErrorArray.push(connectError);
@@ -57,17 +65,26 @@ function start() {
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
             flagConnect = 1;
         }
-        connectServer();
+        //connectServer();
     });
-
+    var runInternal;
     dbSocket.on('close', function () {
-        console.log('dbSocket connection closed on ' + recentDate);
-       // connectServer();
+        commonSourceServer.errorLogFile.error('dbSocket connection closed on ' + recentDate);
+        runInternal = setInterval(function () {
+            connectServer();
+        }, 30000);
+        reconnectFlag = true;
     });
 
     dbSocket.on('connect', function () {
         console.log('[dbSocket] connect Ok.');
+        clearInterval(runInternal);
         flagConnect = 0;
+        if (!RecentProcess) {
+            RecentProcess = false;
+            sendData(recentRequestStr, recentSN);
+        }
+
         commonSourceServer.EventEmitter.on("sendDBRequest", function () {
             if (!!commonSourceServer.dbStrArray[0]) {
                 //console.log("dbStrArray :"+commonSourceServer.dbStrArray[0]);
@@ -78,9 +95,13 @@ function start() {
                     * 将请求信息重新做包发送给后台
                     **/
                     var RequestStr = commonSourceServer.dbStrArray.shift();
-                    //console.log(recentDate+':'+"RequestStr :"+RequestStr);
+                    //console.log('db_index 81 lines :'+recentDate+':'+"RequestStr :"+RequestStr);
                     var SN = getSN();
+                    recentRequestStr = RequestStr;
+                    recentSN = SN;
+                    var newDate = new Date();
                     commonSourceServer.dbRequestSN.push(SN);
+                    console.log(newDate + ':  SN  : ' + SN + ':消息 ：' + RequestStr);
                     sendData(RequestStr, SN);
                     RecentProcess = false;
                 }
@@ -185,6 +206,8 @@ function bufferData(data) {
                 //根据len取出本次要处理的数据到dealDataBuffer，然后交由dealReceiveData函数处理
                 var dealDataBuffer = new Buffer(len);
                 receiveBuffer.copy(dealDataBuffer, 0, 8, 8 + len);
+                var Date222 = new Date();
+                console.log(Date222 + '  :  ' + SN + '~~~');
                 dealReceiveData(dealDataBuffer, SN);
                 //计算出剩余的buffer的大小，从receiveBuffer中拷贝出剩余数据到leftReceiveBuffer，再将leftReceiveBuffer重新赋给receiveBuffer。
                 var leftBufferSize = receiveOffset - (8 + len);
@@ -214,6 +237,7 @@ function bufferData(data) {
 function dealReceiveData(dealDataBuffer) {
 
     var receiveDataString = dealDataBuffer.toString('utf8', 0);
+
     commonSourceServer.responseLogFile.info(" DB Server response data :" + receiveDataString);
     // String 转换成 JSON
     var receiveDataJSON;
@@ -221,7 +245,9 @@ function dealReceiveData(dealDataBuffer) {
         receiveDataJSON = JSON.parse(receiveDataString);
     } catch (err) {
         commonSourceServer.errorLogFile.error("db_index.js dealReceiveData function receiveDataJSON = JSON.parse(receiveDataString) err :" + err);
+        receiveDataJSON = { "result": "[error]返回值不是JSON格式" };
     }
+
     commonSourceServer.dbReceiveStrArray.push(receiveDataJSON);
     RecentProcess = true;
     commonSourceServer.EventEmitter.emit("receiveDBData");

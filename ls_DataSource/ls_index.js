@@ -46,6 +46,7 @@ function getSN() {
     }
     return SNMax;
 }
+var reconnectFlag = false;
 
 /**
  * 函数名：start
@@ -55,14 +56,22 @@ function getSN() {
 function start() {
 
     function connectServer() {
-        var x = lsSocket.connect(ipconfig.lsPORT, ipconfig.lsHOST);
+        var x;
+        if (reconnectFlag) {
+            lsSocket.end();
+            x = lsSocket.connect(ipconfig.lsPORT, ipconfig.lsHOST);
+           // reconnectFlag = false;
+        } else {
+            x = lsSocket.connect(ipconfig.lsPORT, ipconfig.lsHOST);
+        }
+	//RecentProcess = true;
     }
 
     connectServer();
 
     lsSocket.on('error', function (error) {
         if (flagConnect == 0) {
-            commonSourceServer.errorLogFile.error('lsSocket Error :' + error.toString());
+           // commonSourceServer.errorLogFile.error('lsSocket Error :' + error.toString());
             var connectError = {
                 "TYPE":"605",
                 "content" : "与检测后台通信失败！"
@@ -72,21 +81,29 @@ function start() {
             commonSourceServer.gjReceivePushArray.push(ErrorArray);
             commonSourceServer.EventEmitter.emit("receiveGJPushData");
             flagConnect = 1;
-            console.log('lsSocket connection closed on ' + recentDate);
+           // console.log('lsSocket connection closed on ' + recentDate);
         }
-        connectServer();
     });
-
+    var runInternal;
     lsSocket.on('close', function () {
-
-        //console.log('lsSocket connection closed on ' + recentDate);
-
+        commonSourceServer.errorLogFile.error('lsSocket connection closed on ' + recentDate);
+         runInternal = setInterval(function(){
+		             connectServer();
+			             },30000);
+        reconnectFlag = true;
     });
 
     lsSocket.on('connect', function () {
         console.log('[lsSocket] connect Ok.');
+	clearInterval(runInternal);
         flagConnect = 0;
+	//RecentProcess = true;
+	if(!RecentProcess){
+            RecentProcess = false;
+            sendData(recentRequestStr, recentSN);
+	}
         commonSourceServer.EventEmitter.on("sendLSRequest", function () {
+	    console.error("lsSocket :"+commonSourceServer.lsStrArray.length);
             if (!!commonSourceServer.lsStrArray[0]) {
                 //console.log("dbStrArray :"+commonSourceServer.dbStrArray[0]);
                 //console.log("count : "+RecentProcess);
@@ -105,7 +122,7 @@ function start() {
                     RecentProcess = false;
                 }
             } else {
-                //console.log('[else RecentProcess]:' + RecentProcess);
+                console.log('[else RecentProcess]:' + RecentProcess);
             }
         });
     });
@@ -161,8 +178,10 @@ function sendData(RequestStr, SN) {
 
     //写入数据
     try {
+	console.log("into lsSocket sendBuffer!!!!!!");
         sendLsBuffer.write(RequestStr, 8);
         lsSocket.write(sendLsBuffer);
+	console.log("!!!!!!!!!!!!!!!!!!!!!!into lsSocket sendBuffer!!!!!!");
     } catch (err) {
         commonSourceServer.errorLogFile.error("ls_index.js sendData function sendDbBuffer.write(RequestStr, 8) err :" + err);
     }
@@ -236,12 +255,17 @@ function dealReceiveDataSJ(dealDataBuffer) {
     commonSourceServer.responseLogFile.info("LS Server response data :" + receiveDataString);
     // String 转换成 JSON
     var receiveDataJSON;
+    console.log("lousao receiveDataJSON : ", receiveDataString);
     try {
         receiveDataJSON = JSON.parse(receiveDataString);
     } catch (err) {
         commonSourceServer.errorLogFile.error("ls_index.js dealReceiveData function receiveDataJSON = JSON.parse(receiveDataString) err :" + err);
     }
-    if (receiveDataJSON["value"] == 0 && receiveDataJSON["desc"] == 2) {//提示用户未登陆，需要重新登陆
+    // if((receiveDataJSON["value"] == 0)||receiveDataJSON["code"] == 0){
+    //     console.log("登陆 : "+JSON.stringify(receiveDataJSON));
+    // }
+    if ((receiveDataJSON["value"] == 0 && receiveDataJSON["desc"] == 2) || (receiveDataJSON["code"] == 0 && receiveDataJSON["desc"] == 2) || (receiveDataJSON["code"] == 0 && receiveDataJSON["description"] == '用户登录失败')) {//提示用户未登陆，需要重新登陆
+    //    console.log("登陆 : "+JSON.stringify(receiveDataJSON));
         //  console.log("提示用户未登陆，需要重新登陆");
         var requestObj = {username: "user", password: "pwd"};//登陆的请求体
         var requestStr = JSON.stringify(requestObj);
@@ -269,6 +293,7 @@ function dealReceiveDataSJ(dealDataBuffer) {
         loginFlag = false;
         sendData(recentRequestStr, recentSN);//再次发送
     } else {
+	console.log("lousao receiveDataJSON :", receiveDataString);
         commonSourceServer.lsReceiveStrArray.push(receiveDataJSON);
         RecentProcess = true;
         commonSourceServer.EventEmitter.emit("receiveLSData");
