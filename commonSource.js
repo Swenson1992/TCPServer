@@ -2,8 +2,58 @@
  * Created by songjian on 2016/9/26.
  */
 var log4js = require("log4js");
-var log4js_config = require(process.env.PSSSP_HOME + "/uiserver/UIServer/log4js.json");
-log4js.configure(log4js_config);
+// var log4js_config = require(process.env.HOME + "/github/TCPServer/log4js.json");
+log4js.configure({
+  "appenders": [{
+    "category": "console",
+    "type": "console"
+  }, {
+    "category": "log_info",
+    "type": "file",
+    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_info/info.log",
+    "maxLogSize": 10485760,
+    "backups": 2
+  }, {
+    "category": "log_response",
+    "type": "file",
+    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_response/response.log",
+    "maxLogSize": 10485760,
+    "backups": 2
+  }, {
+    "category": "log_request",
+    "type": "file",
+    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_request/request.log",
+    "maxLogSize": 10485760,
+    "backups": 2
+  }, {
+    "category": "log_error",
+    "type": "file",
+    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_error/error.log",
+    "maxLogSize": 10485760,
+    "backups": 2
+  },{
+    "category": "log_client",
+    "type": "file",
+    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_client/client.log",
+    "maxLogSize": 10485760,
+    "backups": 2
+  }, {
+    "category": "log_push",
+    "type": "file",
+    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_push/push.log",
+    "maxLogSize": 10485760,
+    "backups": 2
+  }],
+  "replaceConsole": true,
+  "levels": {
+    "log_info": "ALL",
+    "log_response": "ALL",
+    "log_request": "ALL",
+    "log_error": "ALL",
+    "log_client": "ALL",
+    "log_push": "ALL"
+  }
+});
 /*
  * log4js的levels配置共分为8个等级(也就是日志等级),
  * 由低到高分别为:ALL TRACE DEBUG INFO WARN ERROR FATAL OFF.
