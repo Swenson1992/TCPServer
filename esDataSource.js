@@ -2,8 +2,8 @@
  * Created by hejicheng on 2016/1/26.
  */
 var elasticsearch = require('elasticsearch');
-var utils = require('./utils');
-var ipconfig = require("./runconfig");
+var utils = require(process.env.PSSSP_HOME + "/uiserver/UIServer/utils");
+var ipconfig = require(process.env.PSSSP_HOME + "/uiserver/UIServer/runconfig");
 var esClient = getEsClient(ipconfig);
 
 

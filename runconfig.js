@@ -9,7 +9,7 @@ function loadJSONFile(file) {
     return JSON.parse(stripJsonComments(json));
 }
 
-var config = loadJSONFile('./ipconfig.json');
+var config = loadJSONFile(process.env.PSSSP_HOME + '/uiserver/UIServer/ipconfig.json');
 
 var dbHOST = config.dbIPconfig.HOST;
 var dbPORT = config.dbIPconfig.PORT;

@@ -2,7 +2,7 @@
  * Created by songjian on 2016/9/26.
  */
 var log4js = require("log4js");
-var log4js_config = require("./log4js.json");
+var log4js_config = require(process.env.PSSSP_HOME + "/uiserver/UIServer/log4js.json");
 log4js.configure(log4js_config);
 /*
  * log4js的levels配置共分为8个等级(也就是日志等级),

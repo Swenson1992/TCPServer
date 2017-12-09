@@ -3,10 +3,10 @@
  */
 
 var url = require("url");
-var utils = require('./utils');
-var es = require("./esDataSource");
+var utils = require(process.env.PSSSP_HOME + "/uiserver/UIServer/utils");
+var es = require(process.env.PSSSP_HOME + "/uiserver/UIServer/esDataSource");
 
-var commonSourceServer = require("./commonSource");
+var commonSourceServer = require(process.env.PSSSP_HOME + "/uiserver/UIServer/commonSource");
 //var oAClient = require("./oa_DataSource/oa_index");
 //var fs = require();
 
