@@ -1,8 +1,8 @@
 /**
  * Created by songjian on 2016/9/22.
  */
-var commonSourceServer = require(process.env.PSSSP_HOME + "/uiserver/UIServer/commonSource");
-var ipconfig = require(process.env.PSSSP_HOME + "/uiserver/UIServer/runconfig");
+var commonSourceServer = require(process.env.PSGSM_HOME + "/uiserver/UIServer/commonSource");
+var ipconfig = require(process.env.PSGSM_HOME + "/uiserver/UIServer/runconfig");
 
 var defaultBufferSize = 1024;
 var receiveBufferSize = defaultBufferSize;

@@ -4,27 +4,41 @@
 var fs = require('fs');
 var stripJsonComments = require('strip-json-comments');
 
+/**
+ * 加载ini格式配置文件
+ * @param {*} file 
+ */
+if(process.env.PSGSM_HOME){
+    var config = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["UIServer"];
+}else{
+    var config = require("./ini-file-loader").load("./PSSSP.ini")["UIServer"];
+}
+
+/**
+ * 加载json格式配置文件
+ * @param {*} file 
+ */
+/*
 function loadJSONFile(file) {
     var json = fs.readFileSync(file).toString();
     return JSON.parse(stripJsonComments(json));
 }
 
-var config = loadJSONFile(process.env.PSSSP_HOME + '/uiserver/UIServer/ipconfig.json');
+var config = loadJSONFile(process.env.PSGSM_HOME + '/uiserver/UIServer/ipconfig.json');
+*/
+var dbHOST = config["IP"];
+var dbPORT = config["DataBase_Port"];
 
-var dbHOST = config.dbIPconfig.HOST;
-var dbPORT = config.dbIPconfig.PORT;
-
-var esHOST = getArrayFromStr(config.esIPconfig.HOST, ",");
+var esHOST = getArrayFromStr(config["ES_IP"], ",");
 console.log("esHOST:",JSON.stringify(esHOST));
 console.log("type esHOST:",typeof esHOST);
-var esPORT = config.esIPconfig.PORT;
+var esPORT = config["ES_PORT"];
 
-var jxHOST = config.jxIPconfig.HOST;
-var jxPORT = config.jxIPconfig.PORT;
+var jxHOST = config["IP"];
+var jxPORT = config["CVS_Port"];
 
-var lsHOST = config.lsIPconfig.HOST;
-var lsPORT = config.lsIPconfig.PORT;
-
+var lsHOST = config["IP"];
+var lsPORT = config["VBS_Port"];
 
 function getArrayFromStr(fromStr, screenStr) {
 

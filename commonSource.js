@@ -2,7 +2,7 @@
  * Created by songjian on 2016/9/26.
  */
 var log4js = require("log4js");
-// var log4js_config = require(process.env.HOME + "/github/TCPServer/log4js.json");
+// var log4js_config = require(process.env.PSGSM_HOME + "/github/TCPServer/log4js.json");
 log4js.configure({
   "appenders": [{
     "category": "console",
@@ -10,37 +10,37 @@ log4js.configure({
   }, {
     "category": "log_info",
     "type": "file",
-    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_info/info.log",
+    "filename": process.env.PSGSM_HOME + "/log/uiserver-info.log",
     "maxLogSize": 10485760,
     "backups": 2
   }, {
     "category": "log_response",
     "type": "file",
-    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_response/response.log",
+    "filename": process.env.PSGSM_HOME + "/log/uiserver-response.log",
     "maxLogSize": 10485760,
     "backups": 2
   }, {
     "category": "log_request",
     "type": "file",
-    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_request/request.log",
+    "filename": process.env.PSGSM_HOME + "/log/uiserver-request.log",
     "maxLogSize": 10485760,
     "backups": 2
   }, {
     "category": "log_error",
     "type": "file",
-    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_error/error.log",
+    "filename": process.env.PSGSM_HOME + "/log/uiserver-error.log",
     "maxLogSize": 10485760,
     "backups": 2
   },{
     "category": "log_client",
     "type": "file",
-    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_client/client.log",
+    "filename": process.env.PSGSM_HOME + "/log/uiserver-client.log",
     "maxLogSize": 10485760,
     "backups": 2
   }, {
     "category": "log_push",
     "type": "file",
-    "filename": process.env.HOME + "/uiserver/UIServer/logs/log_push/push.log",
+    "filename": process.env.PSGSM_HOME + "/log/uiserver-push.log",
     "maxLogSize": 10485760,
     "backups": 2
   }],
