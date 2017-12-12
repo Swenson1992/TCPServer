@@ -8,10 +8,13 @@ var stripJsonComments = require('strip-json-comments');
  * 加载ini格式配置文件
  * @param {*} file 
  */
-if(process.env.PSGSM_HOME){
+
+if (process.env.PSGSM_HOME) {
     var config = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["UIServer"];
-}else{
+    var ipConfig = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["LOCAL"];
+} else {
     var config = require("./ini-file-loader").load("./PSSSP.ini")["UIServer"];
+    var ipConfig = require("./ini-file-loader").load("./PSSSP.ini")["UIServer"];
 }
 
 /**
@@ -26,12 +29,13 @@ function loadJSONFile(file) {
 
 var config = loadJSONFile(process.env.PSGSM_HOME + '/uiserver/UIServer/ipconfig.json');
 */
-var dbHOST = config["IP"];
+
+var dbHOST = ipConfig["IP"];
 var dbPORT = config["DataBase_Port"];
 
 var esHOST = getArrayFromStr(config["ES_IP"], ",");
-console.log("esHOST:",JSON.stringify(esHOST));
-console.log("type esHOST:",typeof esHOST);
+console.log("esHOST:", JSON.stringify(esHOST));
+console.log("type esHOST:", typeof esHOST);
 var esPORT = config["ES_PORT"];
 
 var jxHOST = config["IP"];
