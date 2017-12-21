@@ -10,11 +10,9 @@ var stripJsonComments = require('strip-json-comments');
  */
 
 if (process.env.PSGSM_HOME) {
-    var config = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["UIServer"];
-    var ipConfig = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["LOCAL"];
+    var config = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["UISERVER"];
 } else {
-    var config = require("./ini-file-loader").load("./PSSSP.ini")["UIServer"];
-    var ipConfig = require("./ini-file-loader").load("./PSSSP.ini")["UIServer"];
+    var config = require("./ini-file-loader").load("./PSSSP.ini")["UISERVER"];
 }
 
 /**
@@ -30,8 +28,8 @@ function loadJSONFile(file) {
 var config = loadJSONFile(process.env.PSGSM_HOME + '/uiserver/UIServer/ipconfig.json');
 */
 
-var dbHOST = ipConfig["IP"];
-var dbPORT = config["DataBase_Port"];
+var dbHOST = config["IP"];
+var dbPORT = config["DATABASE_PORT"];
 
 var esHOST = getArrayFromStr(config["ES_IP"], ",");
 console.log("esHOST:", JSON.stringify(esHOST));
@@ -39,10 +37,10 @@ console.log("type esHOST:", typeof esHOST);
 var esPORT = config["ES_PORT"];
 
 var jxHOST = config["IP"];
-var jxPORT = config["CVS_Port"];
+var jxPORT = config["CVS_SERVER_PORT"];
 
 var lsHOST = config["IP"];
-var lsPORT = config["VBS_Port"];
+var lsPORT = config["VBS_SERVER_PORT"];
 
 function getArrayFromStr(fromStr, screenStr) {
 

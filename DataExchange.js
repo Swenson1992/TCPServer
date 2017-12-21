@@ -16,10 +16,10 @@ if (process.env.PSGSM_HOME) {
 
 dbClient.dbClientStart();
 if (process.env.PSGSM_HOME) {
-    var config = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["UIServer"];
+    var config = require(process.env.PSGSM_HOME + "/uiserver/UIServer/ini-file-loader").load(process.env.PSGSM_HOME + "/conf/PSSSP.ini")["UISERVER"];
 
 } else {
-    var config = require("./ini-file-loader").load("./conf.ini")["UIServer"];
+    var config = require("./ini-file-loader").load("./conf.ini")["UISERVER"];
 }
 
 if (config["OS"] == "Rocky") {

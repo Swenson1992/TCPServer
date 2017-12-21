@@ -24,7 +24,7 @@ var loginFlag = false;//当前操作是否为登陆操作。
 
 var flagConnect = 0;
 
-var lsSessionFile = "lsSessionFile";
+var lsSessionFile = process.env.PSGSM_HOME + "/uiserver/UIServer/lsSessionFile";
 
 fs.readFile(lsSessionFile, function (err, bytesRead) {
     if (err) {
